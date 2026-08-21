@@ -1,872 +1,1219 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sagar Mitra — AI Ocean Intelligence & Multi-Stakeholder Research Portal</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAGAR MITRA — AI Ocean Intelligence & Research Portal</title>
 
-<!-- Dependencies -->
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Tailwind CSS & Leaflet -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-<!-- Motion.dev & Confetti -->
-<script src="https://cdn.jsdelivr.net/npm/motion@10.16.2/dist/motion.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          abyss: '#030712',
-          deep: '#071626',
-          current: '#2dd4bf',
-          pfz: '#22c55e',
-          pin: '#facc15',
-          coral: '#f87171',
-          mist: '#94a3b8',
-        },
-        fontFamily: {
-          display: ['"Space Grotesk"', 'sans-serif'],
-          sans: ['Inter', 'sans-serif'],
-          mono: ['"JetBrains Mono"', 'monospace'],
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            deepSea: '#010b18',
+            oceanDark: '#031428',
+            oceanCard: 'rgba(8, 26, 48, 0.75)',
+            cyanGlow: '#00e5ff',
+            emeraldGlow: '#10b981',
+            amberPin: '#f59e0b',
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
         },
       },
-    },
-  };
-</script>
+    };
+  </script>
 
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #030712;
-    color: #e2e8f0;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-  }
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #010b18;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
 
-  .glass {
-    background: rgba(7, 22, 38, 0.82);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(45, 212, 191, 0.2);
-  }
+    /* Ambient Ocean Caustics & Glows */
+    .ocean-bg {
+      background: 
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.22) 0%, transparent 60%),
+        radial-gradient(circle at 10% 40%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 90% 60%, rgba(14, 165, 233, 0.15) 0%, transparent 55%),
+        linear-gradient(180deg, #031428 0%, #010b18 100%);
+    }
 
-  .glass-card {
-    background: rgba(11, 28, 48, 0.7);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(45, 212, 191, 0.22);
-  }
+    /* Glass Panels */
+    .glass-box {
+      background: rgba(8, 25, 46, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 229, 255, 0.25);
+    }
 
-  .caustic-bg {
-    background: radial-gradient(circle at 50% 12%, rgba(45, 212, 191, 0.18), transparent 60%),
-                radial-gradient(circle at 85% 75%, rgba(34, 197, 94, 0.1), transparent 55%),
-                linear-gradient(180deg, #030712 0%, #06182c 50%, #020710 100%);
-  }
+    /* Unified Glowing Deep Cyan / Teal Sticky Notes (Both Sides) */
+    .sticky-note-left {
+      background: linear-gradient(145deg, #093748 0%, #0d5c75 60%, #087594 100%);
+      border: 1.5px solid rgba(0, 229, 255, 0.5);
+      color: #f0fdfa;
+      box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 229, 255, 0.3);
+      transform: rotate(-2deg);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .sticky-note-left:hover {
+      transform: rotate(0deg) translateY(-4px) scale(1.025);
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.65), 0 0 28px rgba(0, 229, 255, 0.5);
+    }
 
-  /* Sticky Notes */
-  .note-left {
-    transform: rotate(-3deg);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .note-right {
-    transform: rotate(3deg);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .note-left:hover, .note-right:hover {
-    transform: rotate(0deg) translateY(-6px) scale(1.03);
-    border-color: rgba(45, 212, 191, 0.8);
-    box-shadow: 0 16px 35px -5px rgba(45, 212, 191, 0.3);
-  }
+    .sticky-note-right {
+      background: linear-gradient(145deg, #093748 0%, #0d5c75 60%, #087594 100%);
+      border: 1.5px solid rgba(0, 229, 255, 0.5);
+      color: #f0fdfa;
+      box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 229, 255, 0.3);
+      transform: rotate(2deg);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .sticky-note-right:hover {
+      transform: rotate(0deg) translateY(-4px) scale(1.025);
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.65), 0 0 28px rgba(0, 229, 255, 0.5);
+    }
 
-  /* Map Markers */
-  .argo-pin {
-    width: 12px; height: 12px; border-radius: 999px;
-    background: #facc15;
-    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.6);
-    animation: pulse-yellow 2.2s ease-out infinite;
-  }
-  @keyframes pulse-yellow {
-    0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.6); }
-    70% { box-shadow: 0 0 0 14px rgba(250, 204, 21, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
-  }
+    .pin-head {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
-  .pfz-pin {
-    width: 14px; height: 14px; border-radius: 999px;
-    background: #22c55e;
-    box-shadow: 0 0 8px 3px rgba(34, 197, 94, 0.85);
-    animation: glow-green 2.6s ease-in-out infinite;
-  }
-  @keyframes glow-green {
-    0%, 100% { box-shadow: 0 0 6px 2px rgba(34, 197, 94, 0.6); }
-    50% { box-shadow: 0 0 16px 6px rgba(34, 197, 94, 0.95); }
-  }
+    /* Leaflet Custom Glowing Markers */
+    .argo-marker {
+      width: 14px;
+      height: 14px;
+      background: #facc15;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 12px 3px rgba(250, 204, 21, 0.85);
+      animation: pulse-argo 2s infinite ease-in-out;
+    }
+    @keyframes pulse-argo {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.85; box-shadow: 0 0 20px 6px rgba(250, 204, 21, 1); }
+    }
 
-  /* Screen Water Ripple */
-  .ripple-circle {
-    position: absolute;
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    border: 3px solid rgba(45, 212, 191, 0.9);
-    background: radial-gradient(circle, rgba(45, 212, 191, 0.4) 0%, rgba(7, 22, 38, 0.85) 80%);
-    animation: expandRipple 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  }
-  @keyframes expandRipple {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(5.5); opacity: 0; }
-  }
+    .pfz-marker {
+      width: 28px;
+      height: 28px;
+      background: rgba(16, 185, 129, 0.35);
+      border: 2px solid #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 18px 4px rgba(16, 185, 129, 0.85);
+      animation: pulse-pfz 2.5s infinite;
+    }
+    @keyframes pulse-pfz {
+      0%, 100% { transform: scale(0.95); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+      50% { transform: scale(1.15); box-shadow: 0 0 25px rgba(16, 185, 129, 1); }
+    }
 
-  /* Scuba Splash Dive Transition */
-  #dive-splash-overlay {
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  #dive-splash-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-  }
+    /* Waveform Animation */
+    @keyframes soundwave {
+      0%, 100% { height: 4px; }
+      50% { height: 18px; }
+    }
+    .wave-bar {
+      width: 3px;
+      background: #00e5ff;
+      border-radius: 99px;
+      animation: soundwave 1.2s ease-in-out infinite;
+    }
 
-  /* Realistic stationary diver subtle vertical breathing idle */
-  @keyframes idleFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
-  }
-  .diver-idle {
-    animation: idleFloat 3.2s ease-in-out infinite;
-  }
+    /* Floating Bubble Canvas */
+    #bubble-canvas, #dive-bubble-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
 
-  @keyframes finKickSubtle {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-12deg); }
-  }
-  .diver-leg-l {
-    transform-origin: 35px 68px;
-    animation: finKickSubtle 1.2s ease-in-out infinite;
-  }
-  .diver-leg-r {
-    transform-origin: 45px 68px;
-    animation: finKickSubtle 1.2s ease-in-out infinite 0.6s;
-  }
+    /* 100% Solid/Opaque Deep-Sea Transition Section */
+    #section-diving {
+      background: radial-gradient(circle at 50% 10%, #032a4e 0%, #021830 45%, #010b18 95%) !important;
+      background-color: #010b18 !important;
+    }
 
-  /* Chat Modal */
-  #chat-container {
-    transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-origin: bottom right;
-  }
-  #chat-container.chat-closed {
-    opacity: 0;
-    transform: scale(0.3) translateY(80px);
-    pointer-events: none;
-  }
-  #chat-container.chat-open {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    pointer-events: auto;
-  }
+    .surface-arch {
+      position: absolute;
+      top: -120px;
+      left: -10%;
+      width: 120%;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center bottom, rgba(0, 229, 255, 0.35) 0%, rgba(0, 229, 255, 0) 70%);
+      box-shadow: 0 15px 45px rgba(0, 229, 255, 0.4);
+      border-bottom: 2px solid rgba(0, 229, 255, 0.6);
+      pointer-events: none;
+    }
 
-  #chat-thread::-webkit-scrollbar { width: 5px; }
-  #chat-thread::-webkit-scrollbar-thumb { background: rgba(45, 212, 191, 0.4); border-radius: 999px; }
+    .sun-rays {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 80%;
+      background: conic-gradient(from 180deg at 50% 0%, 
+        transparent 35%, 
+        rgba(0, 229, 255, 0.18) 42%, 
+        transparent 47%, 
+        rgba(255, 255, 255, 0.22) 50%, 
+        transparent 53%, 
+        rgba(0, 229, 255, 0.18) 58%, 
+        transparent 65%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
 
-  .persona-badge.active { background: rgba(45, 212, 191, 0.25); border-color: rgba(45, 212, 191, 0.8); color: #2dd4bf; }
-  .persona-badge:not(.active) { color: #94a3b8; border-color: rgba(255,255,255,0.1); }
-</style>
+    /* Creature Animations */
+    @keyframes diverFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(-1.5deg); }
+    }
+    .diver-container {
+      animation: diverFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes finKick {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-8deg); }
+    }
+    .diver-fins {
+      transform-origin: 40px 75px;
+      animation: finKick 1.4s ease-in-out infinite;
+    }
+
+    @keyframes turtleSwim {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+    .turtle-anim {
+      animation: turtleSwim 5s ease-in-out infinite;
+    }
+
+    @keyframes mantaGlide {
+      0%, 100% { transform: translateY(0) scaleY(1); }
+      50% { transform: translateY(-8px) scaleY(0.96); }
+    }
+    .manta-anim {
+      animation: mantaGlide 4.5s ease-in-out infinite;
+    }
+
+    @keyframes jellyfishFloat {
+      0%, 100% { transform: translateY(0px) scale(1); filter: drop-shadow(0 0 25px rgba(217, 70, 239, 0.9)); }
+      50% { transform: translateY(-20px) scale(1.05); filter: drop-shadow(0 0 45px rgba(168, 85, 247, 1)); }
+    }
+    .jellyfish-anim {
+      animation: jellyfishFloat 3.8s ease-in-out infinite;
+    }
+
+    @keyframes fishDart1 {
+      0% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(35px) translateY(-8px); }
+      100% { transform: translateX(0) translateY(0); }
+    }
+    .fish-dart-1 { animation: fishDart1 6s ease-in-out infinite; }
+
+    @keyframes fishDart2 {
+      0% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(-30px) translateY(6px); }
+      100% { transform: translateX(0) translateY(0); }
+    }
+    .fish-dart-2 { animation: fishDart2 7s ease-in-out infinite; }
+
+    /* Custom Chat Scrollbar */
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(0, 229, 255, 0.3);
+      border-radius: 999px;
+    }
+  </style>
 </head>
 
-<body class="relative">
+<body class="relative ocean-bg text-slate-100 min-h-screen">
 
   <!-- ============================================================
-       SCUBA DIVER JUMP & SPLASH TRANSITION
+       SECTION 1: LANDING & FIELD INTERVIEW
        ============================================================ -->
-  <div id="dive-splash-overlay" class="fixed inset-0 z-[1000] bg-abyss/95 backdrop-blur-xl flex flex-col items-center justify-center overflow-hidden">
-    
-    <div id="animated-diver" class="relative w-48 h-48 flex items-center justify-center">
-      <svg class="w-36 h-36 text-current drop-shadow-[0_0_35px_rgba(45,212,191,0.8)]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="50" cy="30" r="14" class="fill-deep stroke-current" />
-        <path d="M44 28h12v4H44z" class="fill-current/30" />
-        <path d="M36 30h-4v12h4" />
-        <rect x="26" y="38" width="10" height="24" rx="4" class="fill-pin/40 stroke-pin" />
-        <path d="M50 44v22l14 16m-14-16l-10 16" />
-        <path d="M40 50l14 8 16-6" />
-        <path d="M64 82l10 4-4 4-8-4z" class="fill-current" />
-        <path d="M40 82l-10 4 4 4 8-4z" class="fill-current" />
-        <circle cx="58" cy="18" r="3" class="stroke-current fill-none animate-ping" />
-      </svg>
+  <section id="section-landing" class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between pt-8 pb-14 px-4 sm:px-8">
+    <canvas id="bubble-canvas"></canvas>
+
+    <!-- Top Badge -->
+    <div class="relative z-10 inline-flex items-center gap-2 px-5 py-1.5 rounded-full glass-box text-[11px] font-mono tracking-widest text-cyanGlow border border-cyanGlow/40 uppercase shadow-[0_0_20px_rgba(0,229,255,0.3)]">
+      <span>INCOIS</span>
+      <span class="text-white/40">•</span>
+      <span>ARGO</span>
+      <span class="text-white/40">•</span>
+      <span>OCEAN INTELLIGENCE</span>
     </div>
 
-    <div class="mt-8 text-center">
-      <h3 id="dive-status-text" class="text-2xl md:text-3xl font-display font-bold text-white tracking-wide">
-        Diving into Ocean Telemetry...
-      </h3>
-      <p class="text-xs md:text-sm font-mono text-current mt-2">Connecting to INCOIS ARGO Buoys, CTD Profilers & PFZ Satellite Grids</p>
-    </div>
-
-    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-      <div class="w-64 h-64 rounded-full border-2 border-current/40 animate-ping"></div>
-      <div class="w-96 h-96 rounded-full border border-current/20 animate-pulse"></div>
-    </div>
-  </div>
-
-  <!-- Water Ripple Effect Layer -->
-  <div id="ripple-overlay" class="fixed inset-0 z-[998] pointer-events-none overflow-hidden"></div>
-
-  <!-- ============================================================
-       TOP NAVBAR
-       ============================================================ -->
-  <header class="glass fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-6 py-3.5 border-b border-white/10">
-    <div class="flex items-center gap-3 cursor-pointer" onclick="goToLandingPage()">
-      <div class="w-10 h-10 rounded-xl bg-current/20 flex items-center justify-center border border-current/40 shadow-[0_0_15px_rgba(45,212,191,0.3)]">
-        <i data-lucide="waves" class="w-5 h-5 text-current"></i>
-      </div>
-      <div>
-        <h1 class="font-display font-bold text-lg leading-tight text-white tracking-wide">Sagar Mitra</h1>
-        <p class="text-[10px] text-mist font-mono leading-tight">Ministry of Earth Sciences · INCOIS Multimodal AI Platform</p>
-      </div>
-    </div>
-    
-    <div class="flex items-center gap-3">
-      <button onclick="triggerDiverTransition()" class="text-xs font-mono text-mist hover:text-current px-3.5 py-1.5 rounded-full border border-white/10 hover:border-current/40 transition flex items-center gap-1.5">
-        <i data-lucide="compass" class="w-4 h-4 text-current"></i> <span class="hidden sm:inline">Live Ocean</span> Map & Lab
-      </button>
-    </div>
-  </header>
-
-  <!-- ============================================================
-       PAGE 1: LANDING PAGE
-       ============================================================ -->
-  <main id="landing-page" class="min-h-screen pt-24 pb-16 px-4 md:px-8 caustic-bg flex flex-col justify-center items-center relative z-10">
-    
-    <!-- Headline & Unified Mission -->
-    <div id="hero-header" class="text-center max-w-3xl mb-10">
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-current/10 border border-current/40 text-current text-xs font-mono mb-4 shadow-sm">
-        <span class="w-2 h-2 rounded-full bg-current animate-ping"></span> SIH Problem Statement · Multimodal Ocean Intelligence
-      </div>
-      <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white tracking-tight leading-tight">
-        Democratizing Ocean Intelligence: From Coastal Livelihoods to Deep Research
-      </h2>
-      <p class="text-sm md:text-base text-mist mt-3 font-sans max-w-2xl mx-auto">
-        A unified platform translating INCOIS Argo floats, CTD depth profiles, and satellite telemetry into actionable insights for traditional fishermen, marine researchers, and oceanography students.
+    <!-- Main Title & Subtitle -->
+    <div class="relative z-10 text-center max-w-3xl mt-4">
+      <h1 class="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight">
+        <span class="text-white">SAGAR</span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyanGlow to-teal-400 drop-shadow-[0_0_25px_rgba(0,229,255,0.6)]">MITRA</span>
+      </h1>
+      <p class="text-sm sm:text-base text-slate-300 font-medium mt-3 max-w-xl mx-auto leading-relaxed">
+        Turning complex ocean intelligence into decisions that fishermen, students and researchers can actually use.
       </p>
     </div>
 
-    <!-- 3-Column Problem / Video / Solution Grid -->
-    <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+    <!-- Center 3-Column Grid -->
+    <div class="relative z-10 w-full max-w-6xl mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
       
-      <!-- Left Sticky Notes: Ground Reality & Scientific Challenges -->
-      <div class="lg:col-span-3 space-y-5">
-        <div class="note-left glass-card p-4 rounded-xl border border-coral/40">
-          <div class="flex items-center gap-2 text-coral text-xs font-mono font-semibold uppercase mb-1">
-            <i data-lucide="fuel" class="w-4 h-4"></i> Livelihood Impact
+      <!-- Left 3 Sticky Notes (Matched to Right-Hand Deep Cyan Glow) -->
+      <div class="lg:col-span-3 flex flex-col gap-4">
+        <div class="sticky-note-left relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">❓</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Unpredictable sea states & wasted fuel.</p>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            "Coastal fishermen burn ₹4,000–₹7,000 on diesel per venture searching blindly. Real-time PFZ guidance prevents economic loss and enhances catch sustainability."
-          </p>
         </div>
 
-        <div class="note-left glass-card p-4 rounded-xl border border-pin/40">
-          <div class="flex items-center gap-2 text-pin text-xs font-mono font-semibold uppercase mb-1">
-            <i data-lucide="database" class="w-4 h-4"></i> Raw Data Bottlenecks
+        <div class="sticky-note-left relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">🧭</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Complex scientific maps aren't readable at sea.</p>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Researchers and students struggle with complex NetCDF files and raw buoy feeds. Sagar Mitra computes instantaneous Z-tests, SST anomalies, and thermocline depths.
-          </p>
+        </div>
+
+        <div class="sticky-note-left relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">🗣️</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Language barriers with raw meteorological alerts.</p>
+          </div>
         </div>
       </div>
 
-      <!-- Center: Video Player Frame -->
+      <!-- Center Video Player -->
       <div class="lg:col-span-6 flex flex-col items-center">
-        <div class="w-full aspect-video rounded-2xl glass-card overflow-hidden relative shadow-2xl border-2 border-current/40 group">
+        <div class="w-full aspect-[16/9] rounded-2xl overflow-hidden glass-box border-2 border-cyanGlow/50 relative shadow-[0_0_40px_rgba(0,229,255,0.3)] group">
           <iframe 
+            id="video-player" 
             class="w-full h-full object-cover" 
-            src="https://www.youtube.com/embed/ScMzIvxBSi4?rel=0&modestbranding=1" 
-            title="Field Case Study Interview" 
+            src="https://www.youtube.com/embed/ScMzIvxBSi4?enablejsapi=1&rel=0&modestbranding=1" 
+            title="Fisherman Field Interview" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen>
           </iframe>
+
+          <div class="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-between text-[11px] font-mono text-white pointer-events-none">
+            <div class="flex items-center gap-2">
+              <i data-lucide="play" class="w-3.5 h-3.5 fill-white text-white"></i>
+              <span>0:00 / 1:24</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+              <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+              <i data-lucide="more-vertical" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
         </div>
-        <p class="text-[12px] font-mono text-mist mt-3 text-center flex items-center gap-1.5">
-          <i data-lucide="video" class="w-4 h-4 text-current"></i> Field Ground Reality: Why Coastal Communities Need Instant Ocean Telemetry
+
+        <p class="text-xs font-mono text-cyanGlow/90 mt-3 text-center">
+          Fisherman Field Interview <br />
+          <span class="text-white italic font-semibold">"We need to know the sea before we enter it."</span>
         </p>
       </div>
 
-      <!-- Right Sticky Notes: Multimodal Solutions -->
-      <div class="lg:col-span-3 space-y-5">
-        <div class="note-right glass-card p-4 rounded-xl border border-pfz/40">
-          <div class="flex items-center gap-2 text-pfz text-xs font-mono font-semibold uppercase mb-1">
-            <i data-lucide="microscope" class="w-4 h-4"></i> Research-Grade Telemetry
+      <!-- Right 3 Sticky Notes -->
+      <div class="lg:col-span-3 flex flex-col gap-4">
+        <div class="sticky-note-right relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">📢</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Direct AI voice summaries in regional languages.</p>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Real-time hydrostatic pressure, salinity in PSU, thermal front boundaries, and fleet-wide confidence statistics for scientific inquiry.
-          </p>
         </div>
 
-        <div class="note-right glass-card p-4 rounded-xl border border-current/40">
-          <div class="flex items-center gap-2 text-current text-xs font-mono font-semibold uppercase mb-1">
-            <i data-lucide="languages" class="w-4 h-4"></i> Adaptive AI Personas
+        <div class="sticky-note-right relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">🐟</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Instant high-yield Potential Fishing Zone mapping.</p>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Switch smoothly between vernacular voice advisories for fishermen, educational explanations for students, and statistical summaries for oceanographers.
-          </p>
+        </div>
+
+        <div class="sticky-note-right relative rounded-2xl p-4 pt-5">
+          <div class="pin-head bg-cyan-300 shadow-[0_0_10px_#00e5ff]"></div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg">🛡️</span>
+            <p class="text-xs font-bold text-cyan-50 leading-snug">Simplified depth & safety intelligence.</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Stakeholder Capability Highlights -->
-    <div class="w-full max-w-5xl mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="glass p-4 rounded-xl border border-white/10 flex items-start gap-3">
-        <div class="w-8 h-8 rounded-lg bg-pfz/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <i data-lucide="anchor" class="w-4 h-4 text-pfz"></i>
-        </div>
-        <div>
-          <h3 class="text-xs font-mono uppercase font-semibold text-white">For Fishermen</h3>
-          <p class="text-[11px] text-slate-300 mt-1 leading-normal">GPS fishing zones, vernacular voice assistance, and 14nm swell safety alerts.</p>
-        </div>
-      </div>
-
-      <div class="glass p-4 rounded-xl border border-white/10 flex items-start gap-3">
-        <div class="w-8 h-8 rounded-lg bg-pin/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <i data-lucide="graduation-cap" class="w-4 h-4 text-pin"></i>
-        </div>
-        <div>
-          <h3 class="text-xs font-mono uppercase font-semibold text-white">For Students</h3>
-          <p class="text-[11px] text-slate-300 mt-1 leading-normal">Interactive thermocline concepts, monsoon gyres, and ARGO float operations.</p>
-        </div>
-      </div>
-
-      <div class="glass p-4 rounded-xl border border-white/10 flex items-start gap-3">
-        <div class="w-8 h-8 rounded-lg bg-current/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <i data-lucide="flask-conical" class="w-4 h-4 text-current"></i>
-        </div>
-        <div>
-          <h3 class="text-xs font-mono uppercase font-semibold text-white">For Researchers</h3>
-          <p class="text-[11px] text-slate-300 mt-1 leading-normal">Z-test / T-test fleet anomaly checks, depth profiling (2000m), and live CTD telemetry.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scuba Jump Transition CTA -->
-    <div class="mt-12 text-center">
+    <!-- Dive CTA Button -->
+    <div class="relative z-10 mt-10 mb-2 flex flex-col items-center">
       <button 
-        onclick="triggerDiverTransition()" 
-        class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 text-abyss font-display font-bold text-sm uppercase tracking-wider shadow-[0_0_40px_rgba(45,212,191,0.6)] hover:scale-105 active:scale-95 transition-all">
-        <span>Enter the Control Room</span>
-        <div class="w-7 h-7 rounded-full bg-abyss/25 flex items-center justify-center group-hover:translate-y-1 transition-transform">
-          <i data-lucide="arrow-down" class="w-4 h-4 text-abyss"></i>
+        onclick="startDiveTransition()"
+        class="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-cyan-950 via-deepSea to-cyan-950 border-2 border-cyanGlow text-white font-bold text-sm tracking-wide shadow-[0_0_30px_rgba(0,229,255,0.45)] hover:shadow-[0_0_50px_rgba(0,229,255,0.8)] hover:scale-105 active:scale-95 transition-all">
+        <i data-lucide="waves" class="w-5 h-5 text-cyanGlow"></i>
+        <span>Dive Into Sagar Mitra Intelligence</span>
+        <div class="w-6 h-6 rounded-full bg-cyanGlow/20 border border-cyanGlow/60 flex items-center justify-center group-hover:translate-y-0.5 transition-transform">
+          <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-cyanGlow"></i>
         </div>
       </button>
-      <p class="text-[11px] font-mono text-mist mt-3">Click to trigger diving simulation & explore live ocean intelligence</p>
-    </div>
-  </main>
-
-  <!-- ============================================================
-       PAGE 2: LIVE OCEAN INTELLIGENCE CONTROL ROOM (LEAFLET MAP)
-       ============================================================ -->
-  <section id="dashboard" class="hidden relative h-screen w-screen pt-[64px] flex-col bg-abyss">
-    
-    <!-- Control Room Toolbar -->
-    <div class="glass z-[400] flex flex-wrap items-center justify-between gap-3 px-5 py-2.5 border-b border-white/10">
-      
-      <div class="flex items-center gap-3">
-        <button 
-          onclick="goToLandingPage()" 
-          class="glass rounded-full px-3.5 py-1.5 text-xs font-mono text-mist hover:text-white hover:border-current/50 transition flex items-center gap-1.5 border">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-current"></i> Landing Page
-        </button>
-
-        <div class="h-4 w-px bg-white/20 hidden sm:block"></div>
-
-        <!-- Persona selector -->
-        <div id="persona-badges" class="flex items-center gap-1.5">
-          <button data-persona-btn="fisherman" class="persona-badge glass rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1 border">
-            <i data-lucide="anchor" class="w-3 h-3"></i> Fisherman
-          </button>
-          <button data-persona-btn="student" class="persona-badge glass rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1 border">
-            <i data-lucide="graduation-cap" class="w-3 h-3"></i> Student
-          </button>
-          <button data-persona-btn="researcher" class="persona-badge glass rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1 border">
-            <i data-lucide="flask-conical" class="w-3 h-3"></i> Researcher
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Leaflet Map Full Viewport -->
-    <div class="relative flex-1 w-full h-full">
-      <div id="map" class="w-full h-full z-0"></div>
-
-      <!-- Basemap toggle -->
-      <div class="absolute top-4 left-4 z-[400] glass rounded-full p-1 flex border">
-        <button data-basemap="satellite" class="basemap-btn active rounded-full px-3 py-1.5 text-xs font-medium transition bg-current/90 text-abyss">Satellite</button>
-        <button data-basemap="dark" class="basemap-btn rounded-full px-3 py-1.5 text-xs font-medium transition text-mist">Dark</button>
-      </div>
-
-      <!-- Legend -->
-      <div class="absolute bottom-6 left-4 z-[400] glass rounded-xl px-3.5 py-2.5 text-xs font-mono space-y-1.5 border shadow-xl">
-        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-pin inline-block"></span> Argo Float Profiler</div>
-        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-pfz inline-block"></span> Potential Fishing Zone (PFZ)</div>
-      </div>
     </div>
   </section>
 
   <!-- ============================================================
-       REALISTIC STATIONARY SCUBA DIVER CHAT TRIGGER
-       (Hidden on landing page, only appears in control room)
+       SECTION 2: DESCENDING INTO THE BLUE (OPAQUE DEEP-SEA TRANSITION)
        ============================================================ -->
-  <div id="stationary-diver" class="hidden fixed bottom-6 right-6 z-[600] cursor-pointer select-none" onclick="triggerWaterRippleAndOpenChat(event)">
-    <div class="diver-idle relative flex flex-col items-center">
-      
-      <!-- Static Readable Speech Bubble -->
-      <div class="glass mb-2 px-3 py-1 rounded-xl border border-current/40 text-[11px] font-mono text-current whitespace-nowrap shadow-xl flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-pfz animate-ping"></span> Click to Talk with Ocean AI 🤿
-      </div>
+  <section id="section-diving" class="hidden fixed inset-0 z-[100] flex-col items-center justify-between p-4 sm:p-8 overflow-hidden">
+    
+    <!-- Dynamic Bubble Canvas -->
+    <canvas id="dive-bubble-canvas"></canvas>
 
-      <!-- High-Fidelity Scuba Diver Avatar -->
-      <div class="relative w-24 h-24 flex items-center justify-center filter drop-shadow-[0_0_20px_rgba(45,212,191,0.65)] hover:scale-105 transition-transform">
-        <svg viewBox="0 0 100 100" class="w-full h-full">
-          <!-- Oxygen Tank -->
-          <rect x="26" y="24" width="10" height="26" rx="3.5" fill="#facc15" stroke="#ca8a04" stroke-width="1.5" />
-          <rect x="29" y="20" width="4" height="4" fill="#64748b" />
-          <path d="M31 20 C31 16, 42 16, 42 22" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" />
+    <!-- Curved Surface Arch & Sunbeams -->
+    <div class="surface-arch"></div>
+    <div class="sun-rays"></div>
 
-          <!-- Wetsuit Body -->
-          <path d="M36 28 Q44 26 50 32 L46 54 L34 52 Z" fill="#0f172a" stroke="#2dd4bf" stroke-width="1.5" />
-
-          <!-- Arm Holding Torch -->
-          <path d="M42 34 L56 38 L62 34" fill="none" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round" />
-          <path d="M42 34 L56 38 L62 34" fill="none" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" />
-          <rect x="62" y="31" width="7" height="6" rx="1.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1" />
-
-          <!-- Left Leg & Flipper -->
-          <g class="diver-leg-l">
-            <path d="M36 52 L32 68 L24 74" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round" />
-            <path d="M36 52 L32 68 L24 74" fill="none" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" />
-            <polygon points="24,74 10,84 14,88 28,78" fill="#2dd4bf" stroke="#0f766e" stroke-width="1" />
-          </g>
-
-          <!-- Right Leg & Flipper -->
-          <g class="diver-leg-r">
-            <path d="M44 53 L42 69 L36 76" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round" />
-            <path d="M44 53 L42 69 L36 76" fill="none" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" />
-            <polygon points="36,76 22,86 26,90 40,80" fill="#22c55e" stroke="#15803d" stroke-width="1" />
-          </g>
-
-          <!-- Mask & Hood -->
-          <circle cx="46" cy="22" r="10" fill="#0f172a" stroke="#2dd4bf" stroke-width="1.5" />
-          <ellipse cx="49" cy="22" rx="6.5" ry="4.5" fill="#38bdf8" fill-opacity="0.75" stroke="#ffffff" stroke-width="1.2" />
-          <path d="M46 20 L52 20" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
-
-          <!-- Bubbles -->
-          <circle cx="44" cy="14" r="2" fill="#ffffff" opacity="0.8" class="animate-ping" />
-          <circle cx="41" cy="9" r="2.5" fill="#ffffff" opacity="0.6" />
-        </svg>
-
-        <span class="absolute inset-0 rounded-full border-2 border-current/30 animate-ping pointer-events-none"></span>
-      </div>
-
+    <!-- LEFT CORAL REEF COMPLEX -->
+    <div class="absolute left-0 bottom-0 top-0 w-64 md:w-80 pointer-events-none z-10 opacity-90 overflow-hidden">
+      <svg class="w-full h-full" viewBox="0 0 300 800" fill="none">
+        <path d="M0,800 Q80,720 70,600 Q120,550 80,450 Q130,350 40,250 L0,200 Z" fill="#0f3460" opacity="0.85" />
+        <path d="M0,800 Q110,680 90,560 Q60,420 20,380 L0,350 Z" fill="#e11d48" opacity="0.4" />
+        <circle cx="90" cy="520" r="14" fill="#ec4899" opacity="0.7" filter="blur(1px)" />
+        <circle cx="110" cy="580" r="18" fill="#f43f5e" opacity="0.6" />
+        <circle cx="50" cy="380" r="12" fill="#a855f7" opacity="0.7" />
+        <path d="M30,700 Q90,650 100,580 M70,620 Q120,600 130,530 M50,550 Q80,480 75,410" stroke="#f472b6" stroke-width="6" stroke-linecap="round" />
+        <path d="M10,750 Q60,690 70,610 M50,660 Q100,630 110,560" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+      </svg>
     </div>
-  </div>
+
+    <!-- RIGHT CORAL REEF COMPLEX -->
+    <div class="absolute right-0 bottom-0 top-0 w-64 md:w-80 pointer-events-none z-10 opacity-90 overflow-hidden">
+      <svg class="w-full h-full" viewBox="0 0 300 800" fill="none">
+        <path d="M300,800 Q220,700 240,580 Q180,500 230,400 Q170,300 270,180 L300,150 Z" fill="#0a2a4a" opacity="0.85" />
+        <path d="M300,800 Q200,690 220,570 Q250,450 290,390 L300,360 Z" fill="#e11d48" opacity="0.35" />
+        <path d="M260,750 Q210,670 190,590 M230,640 Q170,590 160,520 M210,560 Q180,490 190,430" stroke="#ec4899" stroke-width="6" stroke-linecap="round" />
+        <path d="M280,700 Q230,620 220,530 M250,580 Q190,540 180,470" stroke="#c084fc" stroke-width="4.5" stroke-linecap="round" />
+        <circle cx="210" cy="630" r="16" fill="#f43f5e" opacity="0.65" />
+        <circle cx="180" cy="510" r="12" fill="#e879f9" opacity="0.75" />
+      </svg>
+    </div>
+
+    <!-- TOP-LEFT: DOLPHINS -->
+    <div class="absolute top-16 sm:top-24 left-8 sm:left-20 z-20 pointer-events-none opacity-85 fish-dart-1">
+      <svg class="w-36 sm:w-48 h-24" viewBox="0 0 160 80" fill="none">
+        <path d="M15,45 C40,20 85,15 125,35 C110,28 95,30 80,38 C65,48 45,50 15,45 Z" fill="#38bdf8" />
+        <path d="M100,30 C120,20 145,28 155,32 C140,38 125,44 110,33 Z" fill="#38bdf8" />
+        <path d="M65,22 Q75,10 82,18 Z" fill="#0284c7" />
+        <circle cx="140" cy="30" r="1.5" fill="#ffffff" />
+        <g transform="translate(-25, 20) scale(0.75)">
+          <path d="M15,45 C40,20 85,15 125,35 C110,28 95,30 80,38 C65,48 45,50 15,45 Z" fill="#0284c7" opacity="0.75" />
+          <path d="M100,30 C120,20 145,28 155,32 C140,38 125,44 110,33 Z" fill="#0284c7" opacity="0.75" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- TOP-RIGHT: SEA TURTLE -->
+    <div class="absolute top-16 sm:top-20 right-10 sm:right-28 z-20 pointer-events-none opacity-90 turtle-anim">
+      <svg class="w-32 sm:w-44 h-28" viewBox="0 0 140 100" fill="none">
+        <path d="M50,30 Q20,10 5,25 Q30,45 52,48 Z" fill="#059669" stroke="#10b981" stroke-width="1.5" />
+        <path d="M50,70 Q20,90 5,75 Q30,55 52,52 Z" fill="#047857" stroke="#10b981" stroke-width="1.5" />
+        <path d="M90,25 Q115,5 130,18 Q110,40 92,38 Z" fill="#10b981" />
+        <path d="M90,75 Q115,95 130,82 Q110,60 92,62 Z" fill="#059669" />
+        <ellipse cx="72" cy="50" rx="34" ry="26" fill="#854d0e" stroke="#facc15" stroke-width="2" />
+        <path d="M52,50 Q72,30 92,50 Q72,70 52,50 Z" fill="#ca8a04" opacity="0.8" />
+        <circle cx="112" cy="50" r="10" fill="#10b981" stroke="#047857" stroke-width="1.5" />
+        <circle cx="115" cy="47" r="1.5" fill="#000000" />
+      </svg>
+    </div>
+
+    <!-- MID-RIGHT: MANTA RAY -->
+    <div class="absolute top-1/2 right-20 sm:right-48 z-20 pointer-events-none opacity-85 manta-anim">
+      <svg class="w-48 sm:w-64 h-32" viewBox="0 0 180 90" fill="none">
+        <path d="M90,15 C60,35 15,48 0,55 C40,62 75,76 90,90 C105,76 140,62 180,55 C165,48 120,35 90,15 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+        <path d="M90,20 C70,38 35,48 20,54 C50,60 78,70 90,82 C102,70 130,60 160,54 C145,48 110,38 90,20 Z" fill="#1e293b" />
+        <path d="M82,15 Q80,5 74,8 Q78,16 82,18 Z" fill="#38bdf8" />
+        <path d="M98,15 Q100,5 106,8 Q102,16 98,18 Z" fill="#38bdf8" />
+        <path d="M90,90 Q90,130 86,150" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <!-- BOTTOM-RIGHT: BIOLUMINESCENT JELLYFISH -->
+    <div class="absolute bottom-16 right-8 sm:right-16 z-25 pointer-events-none jellyfish-anim">
+      <svg class="w-24 sm:w-32 h-40" viewBox="0 0 100 150" fill="none">
+        <ellipse cx="50" cy="40" rx="35" ry="28" fill="url(#jelly-glow)" stroke="#f472b6" stroke-width="1.8" />
+        <path d="M20,48 Q50,56 80,48 Q50,42 20,48 Z" fill="#e879f9" opacity="0.8" />
+        <path d="M30,52 Q20,80 35,110 Q25,135 30,150" stroke="#e879f9" stroke-width="1.8" stroke-linecap="round" opacity="0.85" />
+        <path d="M42,54 Q50,85 40,115 Q55,140 45,150" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" />
+        <path d="M58,54 Q50,85 60,115 Q45,140 55,150" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+        <path d="M70,52 Q80,80 65,110 Q75,135 70,150" stroke="#e879f9" stroke-width="1.8" stroke-linecap="round" opacity="0.85" />
+        
+        <defs>
+          <radialGradient id="jelly-glow" cx="50%" cy="40%" r="50%">
+            <stop offset="0%" stop-color="#f472b6" stop-opacity="0.8" />
+            <stop offset="60%" stop-color="#a855f7" stop-opacity="0.6" />
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.2" />
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- TROPICAL FISH SCHOOLING -->
+    <div class="absolute left-16 sm:left-32 bottom-36 z-20 pointer-events-none fish-dart-1">
+      <svg class="w-10 h-6 text-amber-400" viewBox="0 0 40 25" fill="currentColor">
+        <path d="M0,12 Q15,0 30,12 Q15,24 0,12 Z M30,12 L40,4 L40,20 Z" />
+      </svg>
+    </div>
+    <div class="absolute left-24 sm:left-48 bottom-48 z-20 pointer-events-none fish-dart-2">
+      <svg class="w-8 h-5 text-cyan-400" viewBox="0 0 40 25" fill="currentColor">
+        <path d="M0,12 Q15,0 30,12 Q15,24 0,12 Z M30,12 L40,4 L40,20 Z" />
+      </svg>
+    </div>
+    <div class="absolute right-32 sm:right-64 bottom-44 z-20 pointer-events-none fish-dart-2">
+      <svg class="w-9 h-6 text-pink-400" viewBox="0 0 40 25" fill="currentColor">
+        <path d="M0,12 Q15,0 30,12 Q15,24 0,12 Z M30,12 L40,4 L40,20 Z" />
+      </svg>
+    </div>
+    <div class="absolute right-24 sm:right-48 bottom-28 z-20 pointer-events-none fish-dart-1">
+      <svg class="w-11 h-7 text-yellow-400" viewBox="0 0 40 25" fill="currentColor">
+        <path d="M0,12 Q15,0 30,12 Q15,24 0,12 Z M30,12 L40,4 L40,20 Z" />
+      </svg>
+    </div>
+
+    <!-- CENTER HERO: SCUBA DIVER -->
+    <div class="relative z-30 flex-1 flex flex-col items-center justify-center -mt-6">
+      <div class="diver-container relative w-72 sm:w-96 h-56 sm:h-64 drop-shadow-[0_0_45px_rgba(0,229,255,0.7)]">
+        <svg viewBox="0 0 240 140" class="w-full h-full">
+          <rect x="75" y="44" width="70" height="15" rx="7.5" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
+          <rect x="75" y="60" width="70" height="15" rx="7.5" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
+          <rect x="68" y="52" width="8" height="14" rx="3" fill="#64748b" />
+          <path d="M145,52 Q160,52 165,65" fill="none" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round" />
+          <path d="M90,50 Q150,45 180,62 Q165,96 115,90 Q98,88 90,50 Z" fill="#0f172a" stroke="#00e5ff" stroke-width="2.5" />
+          <path d="M125,50 L120,90" stroke="#facc15" stroke-width="5" />
+          <circle cx="188" cy="62" r="18" fill="#0f172a" stroke="#00e5ff" stroke-width="2.5" />
+          <ellipse cx="196" cy="62" rx="10" ry="8" fill="#38bdf8" fill-opacity="0.85" stroke="#ffffff" stroke-width="1.8" />
+          <path d="M190,60 L198,60" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" />
+          <path d="M150,70 L185,85 L215,78" fill="none" stroke="#0f172a" stroke-width="9" stroke-linecap="round" />
+          <path d="M150,70 L185,85 L215,78" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" />
+          <rect x="215" y="72" width="12" height="8" rx="2" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
+          <polygon points="227,72 260,55 260,95 227,80" fill="url(#torch-beam)" opacity="0.6" />
+
+          <g class="diver-fins">
+            <path d="M95,78 L60,94 L30,88" fill="none" stroke="#0f172a" stroke-width="11" stroke-linecap="round" />
+            <path d="M95,78 L60,94 L30,88" fill="none" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round" />
+            <polygon points="30,88 0,80 5,108 34,98" fill="#00e5ff" stroke="#0284c7" stroke-width="1.5" />
+          </g>
+
+          <circle cx="205" cy="48" r="3.5" fill="#ffffff" opacity="0.9" class="animate-ping" />
+          <circle cx="215" cy="35" r="5" fill="#ffffff" opacity="0.75" />
+          <circle cx="225" cy="20" r="6.5" fill="#ffffff" opacity="0.6" />
+          <circle cx="238" cy="5" r="8" fill="#ffffff" opacity="0.45" />
+
+          <defs>
+            <linearGradient id="torch-beam" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.8" />
+              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.8" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- Loading Title & Glowing Cyan Progress Bar -->
+      <div class="text-center mt-2 z-30">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide drop-shadow-[0_2px_15px_rgba(0,0,0,0.9)]">
+          Descending Into The Blue
+        </h2>
+        <p class="text-xs sm:text-sm font-mono text-cyanGlow mt-1.5 drop-shadow">Loading Ocean Intelligence...</p>
+        
+        <div class="w-64 sm:w-96 h-2 bg-slate-900/90 rounded-full mt-4 mx-auto overflow-hidden border border-cyanGlow/50 p-0.5 shadow-[0_0_20px_rgba(0,229,255,0.4)]">
+          <div id="dive-progress" class="h-full bg-gradient-to-r from-teal-400 via-cyanGlow to-blue-500 rounded-full w-0 shadow-[0_0_15px_#00e5ff] transition-all duration-300"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Depth & Coordinate Telemetry Footer -->
+    <div class="relative z-30 w-full flex justify-between items-end text-xs font-mono px-4 text-slate-300 opacity-80">
+      <div>Depth: -45.8m • Arabian Basin</div>
+      <div class="text-cyanGlow animate-pulse">Synchronizing INCOIS Floats...</div>
+    </div>
+  </section>
 
   <!-- ============================================================
-       ADAPTIVE FLOATING CHATBOT MODAL (WITH INTEGRATED LANGUAGE SELECTOR)
+       SECTION 3: SAGAR MITRA OCEAN CONTROL ROOM
        ============================================================ -->
-  <aside id="chat-container" class="chat-closed fixed bottom-28 right-6 z-[650] w-[92vw] sm:w-[420px] h-[580px] max-h-[75vh] glass rounded-2xl shadow-2xl flex flex-col border-2 border-current/40 overflow-hidden">
+  <section id="section-control-room" class="hidden relative w-full min-h-screen flex-col bg-deepSea pb-12">
     
-    <!-- Header with Integrated Language Selector -->
-    <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-white/[0.03]">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-full bg-current/20 flex items-center justify-center border border-current/40">
-          <i data-lucide="bot" class="w-4 h-4 text-current"></i>
-        </div>
-        <div>
-          <h2 class="text-sm font-bold text-white tracking-wide">Sagar Mitra Ocean AI</h2>
-          <p id="chat-role-label" class="text-[10px] font-mono uppercase tracking-wide text-current">Mode: Fisherman</p>
-        </div>
-      </div>
+    <!-- Top Ocean Control Room Navbar -->
+    <header class="w-full glass-box border-b border-cyanGlow/20 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40">
       
-      <div class="flex items-center gap-2">
-        <select id="chat-lang-select" class="glass text-white text-[11px] font-mono rounded-full px-2.5 py-1 border border-current/40 focus:outline-none focus:ring-1 focus:ring-current bg-abyss/80">
-          <option value="en">English</option>
-          <option value="hi">हिन्दी</option>
-          <option value="ta">தமிழ்</option>
-        </select>
-        
-        <button id="close-chat" class="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-mist hover:text-white transition">
-          <i data-lucide="x" class="w-4 h-4"></i>
+      <!-- Brand & Back Button -->
+      <div class="flex items-center gap-4">
+        <button 
+          onclick="goToLanding()" 
+          class="glass-box px-3.5 py-1.5 rounded-xl border border-cyanGlow/50 hover:bg-cyanGlow hover:text-slate-950 text-cyanGlow text-xs font-mono font-semibold flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(0,229,255,0.3)]"
+          title="Return to Landing & Interview">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Landing Page</span>
         </button>
-      </div>
-    </div>
 
-    <!-- Quick Action Chips -->
-    <div class="px-4 py-2 border-b border-white/10 bg-white/[0.01]">
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-        <button data-quick-action="fishing-zones" class="glass border border-white/10 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium hover:bg-current/20 transition flex items-center gap-1">
-          <i data-lucide="map-pin" class="w-3 h-3 text-pfz"></i> Fishing Zones
-        </button>
-        <button data-quick-action="telemetry-stats" class="glass border border-white/10 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium hover:bg-current/20 transition flex items-center gap-1">
-          <i data-lucide="activity" class="w-3 h-3 text-current"></i> Telemetry & Stats
-        </button>
-        <button data-quick-action="ocean-currents" class="glass border border-white/10 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium hover:bg-current/20 transition flex items-center gap-1">
-          <i data-lucide="wind" class="w-3 h-3 text-pin"></i> Ocean Currents
-        </button>
-      </div>
-    </div>
+        <div class="h-5 w-px bg-white/20 hidden sm:block"></div>
 
-    <!-- Scrollable Chat Thread -->
-    <div id="chat-thread" class="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3"></div>
-
-    <!-- Anchored Input Composer -->
-    <form id="chat-form" class="border-t border-white/10 p-3 flex items-center gap-2 bg-abyss/95">
-      <button type="button" id="mic-btn" class="w-9 h-9 rounded-full glass border flex items-center justify-center flex-shrink-0 hover:bg-current/20 transition" title="Voice input">
-        <i data-lucide="mic" class="w-4 h-4 text-mist"></i>
-      </button>
-      <input id="chat-input" type="text" autocomplete="off" placeholder="Ask in English, Hindi, or Tamil…" class="flex-1 glass border border-white/15 rounded-full px-4 py-2 text-xs text-white placeholder:text-mist focus:outline-none focus:ring-1 focus:ring-current" />
-      <button type="submit" class="w-9 h-9 rounded-full bg-current text-abyss flex items-center justify-center flex-shrink-0 hover:brightness-110 active:scale-95 transition shadow-[0_0_10px_rgba(45,212,191,0.5)]">
-        <i data-lucide="send" class="w-4 h-4"></i>
-      </button>
-    </form>
-  </aside>
-
-<script>
-// ================================================================
-// 1. PAGE NAVIGATION & SCUBA DIVE TRANSITION
-// ================================================================
-let mapInitialized = false;
-let mapInstance = null;
-
-function triggerDiverTransition() {
-  const overlay = document.getElementById('dive-splash-overlay');
-  const diver = document.getElementById('animated-diver');
-  const statusText = document.getElementById('dive-status-text');
-
-  overlay.classList.add('active');
-
-  if (window.Motion) {
-    Motion.animate(diver, {
-      y: [-50, -120, 160],
-      rotate: [0, -25, 45],
-      scale: [1, 1.25, 0.7],
-      opacity: [1, 1, 0.2]
-    }, {
-      duration: 1.6,
-      easing: [0.22, 1, 0.36, 1]
-    });
-  }
-
-  setTimeout(() => {
-    confetti({
-      particleCount: 60,
-      spread: 75,
-      origin: { y: 0.6 },
-      colors: ['#2dd4bf', '#22c55e', '#38bdf8', '#ffffff'],
-      shapes: ['circle'],
-      scalar: 1.2
-    });
-    statusText.textContent = "Entering Indian Ocean Real-time Sensor Grid...";
-  }, 700);
-
-  setTimeout(() => {
-    document.getElementById('landing-page').classList.add('hidden');
-    const dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-    dashboard.classList.add('flex');
-
-    // Show stationary diver only inside the control room
-    document.getElementById('stationary-diver').classList.remove('hidden');
-
-    if (!mapInitialized) {
-      initLeafletMap();
-      mapInitialized = true;
-    } else {
-      setTimeout(() => mapInstance.invalidateSize(), 200);
-    }
-
-    overlay.classList.remove('active');
-  }, 1800);
-}
-
-function goToLandingPage() {
-  toggleChat(false);
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('flex');
-  document.getElementById('stationary-diver').classList.add('hidden');
-  
-  const landing = document.getElementById('landing-page');
-  landing.classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ================================================================
-// 2. WATER RIPPLE ANIMATION & CHAT TRIGGER
-// ================================================================
-function triggerWaterRippleAndOpenChat(e) {
-  const overlay = document.getElementById('ripple-overlay');
-  const diverEl = document.getElementById('stationary-diver');
-  const rect = diverEl.getBoundingClientRect();
-  const x = e.clientX || (rect.left + rect.width / 2);
-  const y = e.clientY || (rect.top + rect.height / 2);
-
-  const ripple = document.createElement('div');
-  ripple.className = 'ripple-circle';
-  ripple.style.left = `${x}px`;
-  ripple.style.top = `${y}px`;
-  ripple.style.width = '240px';
-  ripple.style.height = '240px';
-  
-  overlay.appendChild(ripple);
-  overlay.classList.add('active');
-
-  setTimeout(() => {
-    toggleChat(true);
-  }, 200);
-
-  setTimeout(() => {
-    ripple.remove();
-    overlay.classList.remove('active');
-  }, 1100);
-}
-
-// ================================================================
-// 3. MULTI-PERSONA CHAT ENGINE (FISHERMAN, STUDENT, RESEARCHER)
-// ================================================================
-let activePersona = 'fisherman';
-const PERSONA_LABEL = { fisherman: 'Fisherman', student: 'Student', researcher: 'Researcher' };
-
-function setPersona(persona) {
-  activePersona = persona;
-  document.querySelectorAll('[data-persona-btn]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.personaBtn === persona);
-  });
-  document.getElementById('chat-role-label').textContent = `Mode: ${PERSONA_LABEL[persona]}`;
-
-  const personaGreetings = {
-    fisherman: "Namaste! Fisherman mode ready. Ask for today's Potential Fishing Zones (PFZ), wave height safety, or click any yellow buoy.",
-    student: "Hello! Student mode active. Ask me about ocean currents, why salinity varies across coasts, or what an ARGO float measures.",
-    researcher: "Researcher mode active. Click any ARGO buoy for raw CTD parameters, or ask for fleet-wide Z-test / T-test variance statistics."
-  };
-  addMessage('bot', personaGreetings[persona]);
-}
-
-document.querySelectorAll('[data-persona-btn]').forEach(btn => {
-  btn.addEventListener('click', () => setPersona(btn.dataset.personaBtn));
-});
-
-const chatContainer = document.getElementById('chat-container');
-const closeChat = document.getElementById('close-chat');
-let isChatOpen = false;
-
-function toggleChat(open) {
-  isChatOpen = open !== undefined ? open : !isChatOpen;
-  if (isChatOpen) {
-    chatContainer.classList.remove('chat-closed');
-    chatContainer.classList.add('chat-open');
-    if (document.getElementById('chat-thread').children.length === 0) {
-      setPersona(activePersona);
-    }
-  } else {
-    chatContainer.classList.remove('chat-open');
-    chatContainer.classList.add('chat-closed');
-  }
-}
-
-closeChat.addEventListener('click', () => toggleChat(false));
-
-const thread = document.getElementById('chat-thread');
-
-function addMessage(sender, text) {
-  const wrap = document.createElement('div');
-  wrap.className = `msg-in flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-  const bubble = document.createElement('div');
-  bubble.className = sender === 'user'
-    ? 'max-w-[82%] bg-current text-abyss text-xs leading-relaxed font-medium rounded-2xl rounded-br-sm px-3.5 py-2.5 shadow-sm'
-    : 'max-w-[82%] glass border border-white/10 text-slate-100 text-xs leading-relaxed rounded-2xl rounded-bl-sm px-3.5 py-2.5';
-  bubble.textContent = text;
-  wrap.appendChild(bubble);
-  thread.appendChild(wrap);
-
-  thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
-}
-
-function generateResponse(persona, message) {
-  const m = message.toLowerCase();
-  
-  // Specific float query
-  const floatMatch = m.match(/float (\d+)/);
-  if (floatMatch) {
-    const f = floatData.find(x => x.id === floatMatch[1]);
-    if (f) {
-      mapInstance.flyTo([f.lat, f.lon], 7, { duration: 1 });
-      const conf = floatConfidence(f);
-      if (persona === 'researcher') {
-        return `Float ${f.id}: SST=${f.sst.toFixed(2)}°C, Salinity=${f.sal.toFixed(2)} PSU, Depth=${f.depth}m. Statistical Z-Score=${conf.z.toFixed(2)} (${conf.significant ? 'Significant anomaly p<0.05' : 'Within normal fleet bounds'}).`;
-      } else if (persona === 'student') {
-        return `Float ${f.id} has dived down to ${f.depth}m. The surface temperature is ${f.sst}°C and salinity is ${f.sal} PSU, which shows the warm mixed layer before the thermocline drops.`;
-      }
-      return `Float ${f.id}: Sea temperature is ${f.sst.toFixed(1)}°C, Salinity is ${f.sal.toFixed(1)} PSU. Water conditions are stable.`;
-    }
-  }
-
-  // Potential Fishing Zones
-  if (m.includes('fishing zone') || m.includes('fish') || m.includes('catch') || m.includes('pfz')) {
-    mapInstance.flyTo([14.6, 70.2], 6, { duration: 1 });
-    if (persona === 'researcher') {
-      return 'PFZ vectors rendered: Convergence of SST front (28.1°C) and MODIS-derived chlorophyll-a bloom (>0.8 mg/m³) located off Ratnagiri (14.6°N, 70.2°E).';
-    }
-    return 'Optimal PFZs detected off Ratnagiri & Kochi. High fish shoal probability based on chlorophyll and thermal boundaries.';
-  }
-
-  // Telemetry & Statistics
-  if (m.includes('telemetry') || m.includes('stat') || m.includes('z-test') || m.includes('t-test')) {
-    const meanSst = (floatData.reduce((a,b)=>a+b.sst,0)/floatData.length).toFixed(2);
-    const meanSal = (floatData.reduce((a,b)=>a+b.sal,0)/floatData.length).toFixed(2);
-    if (persona === 'researcher') {
-      return `Fleet Analytics (n=${floatData.length}): Mean SST=${meanSst}°C, Mean Salinity=${meanSal} PSU. Maximum profiling depth: 2010m. Tap any float for individual Z-score variance.`;
-    }
-    return `Fleet Status: ${floatData.length} active ARGO buoys reporting. Average sea temperature is ${meanSst}°C with normal salinity.`;
-  }
-
-  // Ocean Currents
-  if (m.includes('current') || m.includes('wave') || m.includes('safe') || m.includes('monsoon')) {
-    if (persona === 'student') {
-      return 'The Arabian Sea experiences seasonal reversals. The West India Coastal Current (WICC) flows southward during summer monsoon, driving upwelling near the coast!';
-    } else if (persona === 'researcher') {
-      return 'Dynamic topography indicates geostrophic flow velocities ~0.45 m/s associated with the seasonally reversing Arabian Sea Mini Warm Pool (ASMWP).';
-    }
-    return 'Current conditions: wave height ~1.4m, wind 14 knots. Safe navigation within 14 nautical miles from the coastline.';
-  }
-
-  if (persona === 'researcher') {
-    return 'Query received. INCOIS scientific telemetry feed indexed. Ask for CTD parameters, thermocline gradients, or specific float Z-tests.';
-  } else if (persona === 'student') {
-    return 'I can help explain marine ecosystems, how ocean sensors work, or how sea surface temperature affects the climate!';
-  }
-  return 'Telemetry received. I am actively analyzing real-time oceanic data from INCOIS arrays.';
-}
-
-function handleUserMessage(text) {
-  if (!text.trim()) return;
-  addMessage('user', text);
-  document.getElementById('chat-input').value = '';
-  setTimeout(() => addMessage('bot', generateResponse(activePersona, text)), 400);
-}
-
-document.getElementById('chat-form').addEventListener('submit', e => {
-  e.preventDefault();
-  handleUserMessage(document.getElementById('chat-input').value);
-});
-
-document.querySelectorAll('[data-quick-action]').forEach(btn => {
-  const prompts = {
-    'fishing-zones': 'Find fishing zones',
-    'telemetry-stats': 'Show Argo telemetry stats',
-    'ocean-currents': 'Explain ocean currents',
-  };
-  btn.addEventListener('click', () => handleUserMessage(prompts[btn.dataset.quickAction]));
-});
-
-// Voice Input
-const micBtn = document.getElementById('mic-btn');
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const langForSpeech = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN' };
-
-if (SpeechRecognition) {
-  const recognizer = new SpeechRecognition();
-  recognizer.continuous = false;
-  recognizer.interimResults = false;
-  micBtn.addEventListener('click', () => {
-    recognizer.lang = langForSpeech[document.getElementById('chat-lang-select').value] || 'en-IN';
-    recognizer.start();
-  });
-  recognizer.addEventListener('result', e => handleUserMessage(e.results[0][0].transcript));
-} else {
-  micBtn.addEventListener('click', () => addMessage('bot', 'Voice input is not supported on this browser.'));
-}
-
-// ================================================================
-// 4. LEAFLET MAP INITIALIZATION & STATISTICAL BUOY DATA
-// ================================================================
-const floatData = [
-  { id: '2902123', lat: 14.2, lon: 68.9, depth: 1998, sst: 27.8, sal: 35.4 },
-  { id: '2902198', lat: 17.6, lon: 66.1, depth: 2004, sst: 26.9, sal: 35.9 },
-  { id: '2901784', lat: 11.8, lon: 71.4, depth: 1985, sst: 28.3, sal: 34.8 },
-  { id: '2902341', lat: 9.4,  lon: 76.8, depth: 1990, sst: 28.9, sal: 34.5 },
-  { id: '2902055', lat: 16.9, lon: 84.2, depth: 2010, sst: 29.1, sal: 33.9 },
-  { id: '2901967', lat: 6.8,  lon: 80.6, depth: 1975, sst: 28.6, sal: 34.7 },
-];
-
-const pfzZones = [
-  { lat: 14.6, lon: 70.2, label: 'Off Ratnagiri' },
-  { lat: 9.8,  lon: 75.9, label: 'Off Kochi' },
-  { lat: 17.2, lon: 83.6, label: 'Off Visakhapatnam' },
-];
-
-function floatConfidence(f) {
-  const fleetSst = floatData.map(x => x.sst);
-  const m = fleetSst.reduce((a, b) => a + b, 0) / fleetSst.length;
-  const sd = Math.sqrt(fleetSst.reduce((a, b) => a + (b - m) ** 2, 0) / (fleetSst.length - 1));
-  const z = (f.sst - m) / (sd / Math.sqrt(fleetSst.length));
-  return { z, significant: Math.abs(z) > 1.96 };
-}
-
-function initLeafletMap() {
-  mapInstance = L.map('map', { zoomControl: false }).setView([12.5, 70.5], 5);
-  L.control.zoom({ position: 'bottomright' }).addTo(mapInstance);
-
-  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }).addTo(mapInstance);
-  const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' });
-
-  document.querySelectorAll('[data-basemap]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-basemap]').forEach(b => {
-        b.classList.remove('bg-current/90', 'text-abyss');
-        b.classList.add('text-mist');
-      });
-      btn.classList.add('bg-current/90', 'text-abyss');
-      btn.classList.remove('text-mist');
-      if (btn.dataset.basemap === 'satellite') { mapInstance.removeLayer(darkLayer); satelliteLayer.addTo(mapInstance); }
-      else { mapInstance.removeLayer(satelliteLayer); darkLayer.addTo(mapInstance); }
-    });
-  });
-
-  const argoIcon = L.divIcon({ className: '', html: '<div class="argo-pin"></div>', iconSize: [12, 12] });
-  const pfzIcon = L.divIcon({ className: '', html: '<div class="pfz-pin"></div>', iconSize: [14, 14] });
-
-  floatData.forEach(f => {
-    const conf = floatConfidence(f);
-    L.marker([f.lat, f.lon], { icon: argoIcon }).addTo(mapInstance).bindPopup(`
-      <div class="p-1 font-sans text-xs">
-        <p class="font-bold text-teal-400">ARGO Buoy ${f.id}</p>
-        <div class="space-y-0.5 mt-1 font-mono text-[11px]">
-          <div>Max Depth: ${f.depth}m</div>
-          <div>SST: ${f.sst}°C</div>
-          <div>Salinity: ${f.sal} PSU</div>
-          <div class="text-slate-400">Z-Score: ${conf.z.toFixed(2)} (${conf.significant ? 'Significant' : 'Normal'})</div>
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-cyanGlow/20 border border-cyanGlow flex items-center justify-center text-cyanGlow shadow-[0_0_15px_rgba(0,229,255,0.4)]">
+            <i data-lucide="waves" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-sm sm:text-base text-white tracking-wider leading-tight">SAGAR MITRA</h2>
+            <p class="text-[10px] font-mono tracking-widest text-cyanGlow leading-tight">OCEAN CONTROL ROOM</p>
+          </div>
         </div>
-        <button onclick="syncFloat('${f.id}')" class="mt-2 w-full bg-teal-400 text-slate-900 font-semibold py-1 px-2 rounded-full text-[11px]">Sync with Assistant</button>
       </div>
-    `);
-  });
 
-  pfzZones.forEach(z => {
-    L.marker([z.lat, z.lon], { icon: pfzIcon }).addTo(mapInstance).bindPopup(`<div class="text-xs font-bold text-green-400">${z.label}</div><div class="text-[10px] text-slate-300">Potential Fishing Zone</div>`);
-  });
-}
+      <!-- Controls: Persona, Language, Soundscape -->
+      <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+        
+        <!-- Persona Select -->
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-mono text-slate-400">Persona</span>
+          <select id="persona-select" class="glass-box text-xs font-medium text-white px-3 py-1.5 rounded-lg border border-cyanGlow/30 focus:outline-none focus:border-cyanGlow bg-slate-900/90">
+            <option value="fisherman">Fisherman</option>
+            <option value="student">Student</option>
+            <option value="researcher">Researcher</option>
+          </select>
+        </div>
 
-window.syncFloat = function(id) {
-  mapInstance.closePopup();
-  toggleChat(true);
-  handleUserMessage(`Tell me about float ${id}`);
-};
+        <!-- Language Select -->
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-mono text-slate-400">Language</span>
+          <select id="language-select" class="glass-box text-xs font-medium text-white px-3 py-1.5 rounded-lg border border-cyanGlow/30 focus:outline-none focus:border-cyanGlow bg-slate-900/90">
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
+            <option value="ta">தமிழ்</option>
+            <option value="te">తెలుగు</option>
+          </select>
+        </div>
 
-// Initialize Icons
-lucide.createIcons();
-</script>
+        <!-- Ocean Soundscape Widget -->
+        <div class="flex items-center gap-2 glass-box px-3 py-1.5 rounded-lg border border-cyanGlow/30">
+          <button id="soundscape-toggle" class="text-cyanGlow hover:text-white transition">
+            <i data-lucide="play" id="soundscape-icon" class="w-3.5 h-3.5 fill-cyanGlow"></i>
+          </button>
+          <span class="text-[10px] font-mono text-slate-300 hidden sm:inline">Ocean Soundscape</span>
+          
+          <div class="flex items-center gap-0.5 h-4 px-1">
+            <div class="wave-bar"></div>
+            <div class="wave-bar" style="animation-delay: 0.2s"></div>
+            <div class="wave-bar" style="animation-delay: 0.4s"></div>
+            <div class="wave-bar" style="animation-delay: 0.1s"></div>
+            <div class="wave-bar" style="animation-delay: 0.3s"></div>
+          </div>
+          <i data-lucide="volume-2" class="w-3.5 h-3.5 text-slate-400"></i>
+        </div>
+
+        <button onclick="goToLanding()" class="glass-box p-2 rounded-lg border border-white/10 text-slate-300 hover:text-white transition" title="Back to Top">
+          <i data-lucide="menu" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
+      
+      <!-- MAP CONTAINER -->
+      <div class="relative w-full h-[480px] sm:h-[540px] rounded-2xl glass-box border border-cyanGlow/30 overflow-hidden shadow-[0_0_35px_rgba(0,0,0,0.8)]">
+        
+        <div id="map" class="w-full h-full z-0"></div>
+
+        <!-- Map Layer Toggle -->
+        <div class="absolute top-4 left-4 z-20 glass-box rounded-xl p-1 border border-cyanGlow/40 flex text-xs font-semibold">
+          <button id="btn-layer-ocean" onclick="switchBaseMap('ocean')" class="px-3 py-1.5 rounded-lg bg-cyanGlow text-slate-950 shadow-sm transition">Ocean Map</button>
+          <button id="btn-layer-sat" onclick="switchBaseMap('satellite')" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition">Satellite View</button>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="absolute top-20 left-4 z-20 flex flex-col gap-1.5">
+          <button onclick="mapInstance.zoomIn()" class="w-8 h-8 glass-box rounded-lg border border-white/20 flex items-center justify-center text-white hover:border-cyanGlow transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+          <button onclick="mapInstance.zoomOut()" class="w-8 h-8 glass-box rounded-lg border border-white/20 flex items-center justify-center text-white hover:border-cyanGlow transition">
+            <i data-lucide="minus" class="w-4 h-4"></i>
+          </button>
+          <button onclick="mapInstance.flyTo([14.5, 75.0], 5)" class="w-8 h-8 glass-box rounded-lg border border-white/20 flex items-center justify-center text-cyanGlow hover:border-cyanGlow transition" title="Center View">
+            <i data-lucide="crosshair" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Stat Badges -->
+        <div class="absolute top-4 right-4 z-20 flex items-center gap-3">
+          <div class="glass-box px-3.5 py-1.5 rounded-xl border border-white/15 text-center">
+            <div class="text-base font-extrabold text-white leading-none">08</div>
+            <div class="text-[9px] font-mono text-slate-300 uppercase mt-0.5">Active Floats</div>
+          </div>
+          <div class="glass-box px-3.5 py-1.5 rounded-xl border border-white/15 text-center">
+            <div class="text-base font-extrabold text-emerald-400 leading-none">05</div>
+            <div class="text-[9px] font-mono text-slate-300 uppercase mt-0.5">PFZ Zones</div>
+          </div>
+          <div class="glass-box px-3.5 py-1.5 rounded-xl border border-emerald-500/40 text-center flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <div>
+              <div class="text-xs font-bold text-emerald-400 leading-none">LIVE</div>
+              <div class="text-[8px] font-mono text-slate-300 uppercase">Ocean Status</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="absolute bottom-4 left-4 z-20 glass-box rounded-xl p-3 border border-white/15 text-[11px] font-mono space-y-1.5 shadow-lg">
+          <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Legend</div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#facc15]"></span>
+            <span class="text-slate-200">ARGO Float <span class="text-slate-400 text-[10px]">(Live Telemetry)</span></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]"></span>
+            <span class="text-slate-200">Potential Fishing Zone <span class="text-slate-400 text-[10px]">(High Productivity)</span></span>
+          </div>
+        </div>
+
+        <!-- Animated Scuba Character & "Ask Mitra" Trigger -->
+        <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end">
+          <div onclick="toggleChatInterface()" class="cursor-pointer group relative flex flex-col items-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-[0_0_20px_rgba(0,229,255,0.7)] group-hover:scale-110 transition-transform">
+              <svg viewBox="0 0 100 100" class="w-full h-full">
+                <rect x="25" y="30" width="10" height="26" rx="4" fill="#0284c7" stroke="#00e5ff" stroke-width="1.5" />
+                <rect x="28" y="25" width="4" height="5" fill="#94a3b8" />
+                <ellipse cx="52" cy="55" rx="18" ry="20" fill="#0f172a" stroke="#00e5ff" stroke-width="2" />
+                <circle cx="52" cy="55" r="8" fill="#1e293b" />
+                <circle cx="52" cy="30" r="16" fill="#0f172a" stroke="#00e5ff" stroke-width="2" />
+                <ellipse cx="53" cy="30" rx="11" ry="8" fill="#38bdf8" fill-opacity="0.8" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="50" cy="28" r="2.5" fill="#ffffff" />
+                <circle cx="56" cy="28" r="2.5" fill="#ffffff" />
+                <path d="M68,50 Q82,40 85,25" fill="none" stroke="#0f172a" stroke-width="6" stroke-linecap="round" />
+                <path d="M68,50 Q82,40 85,25" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round" />
+                <circle cx="85" cy="24" r="4.5" fill="#facc15" />
+                <path d="M42,72 L38,88" stroke="#0f172a" stroke-width="6" stroke-linecap="round" />
+                <polygon points="38,88 24,96 44,98" fill="#00e5ff" />
+                <path d="M60,72 L64,88" stroke="#0f172a" stroke-width="6" stroke-linecap="round" />
+                <polygon points="64,88 50,96 70,98" fill="#00e5ff" />
+              </svg>
+            </div>
+
+            <div class="flex items-center gap-2 -mt-2">
+              <button class="glass-box px-4 py-1.5 rounded-full border border-cyanGlow text-xs font-bold text-white flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,229,255,0.4)] hover:bg-cyanGlow hover:text-slate-950 transition">
+                <span>Ask Mitra</span>
+                <i data-lucide="refresh-cw" class="w-3 h-3 text-cyanGlow group-hover:text-slate-950"></i>
+              </button>
+              <button onclick="event.stopPropagation(); toggleFullScreenMap()" class="w-7 h-7 rounded-full glass-box border border-white/20 flex items-center justify-center text-slate-300 hover:text-white">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM 3-COLUMN CHATBOT & TELEMETRY SECTION -->
+      <div id="chatbot-dashboard-section" class="w-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- Left: AI Overview & Quick Actions -->
+        <div class="lg:col-span-3 glass-box rounded-2xl p-5 border border-cyanGlow/25 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-9 h-9 rounded-xl bg-cyanGlow/20 border border-cyanGlow flex items-center justify-center">
+                <i data-lucide="bot" class="w-5 h-5 text-cyanGlow"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">SAGAR MITRA AI</h3>
+                <div class="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Your ocean intelligence assistant. Ask me anything about PFZ, sea conditions, ARGO data, depth or safety.
+            </p>
+
+            <div class="mt-4">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-2">Quick Actions</div>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="sendQuickPrompt('Show me the best fishing zones in Arabian Sea.')" class="glass-box px-2.5 py-2 rounded-xl border border-white/10 hover:border-cyanGlow/50 text-[11px] text-left flex items-center gap-1.5 text-slate-200 transition">
+                  <span>🐟 Best fishing zone?</span>
+                </button>
+                <button onclick="sendQuickPrompt('What are current sea conditions and swell heights?')" class="glass-box px-2.5 py-2 rounded-xl border border-white/10 hover:border-cyanGlow/50 text-[11px] text-left flex items-center gap-1.5 text-slate-200 transition">
+                  <span>🌊 Sea conditions</span>
+                </button>
+                <button onclick="sendQuickPrompt('Explain ARGO float data and thermocline depth.')" class="glass-box px-2.5 py-2 rounded-xl border border-white/10 hover:border-cyanGlow/50 text-[11px] text-left flex items-center gap-1.5 text-slate-200 transition">
+                  <span>📊 Explain ARGO data</span>
+                </button>
+                <button onclick="sendQuickPrompt('Are there any active safety alerts for coastal fishermen?')" class="glass-box px-2.5 py-2 rounded-xl border border-white/10 hover:border-cyanGlow/50 text-[11px] text-left flex items-center gap-1.5 text-amber-300 transition">
+                  <span>⚠️ Safety alerts</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Interactive Chat Thread -->
+        <div class="lg:col-span-6 glass-box rounded-2xl p-4 border border-cyanGlow/30 flex flex-col justify-between h-[340px]">
+          
+          <div id="chat-thread" class="flex-1 overflow-y-auto space-y-3.5 pr-2 custom-scroll text-xs">
+            
+            <div class="flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-cyanGlow/20 border border-cyanGlow/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i data-lucide="bot" class="w-3.5 h-3.5 text-cyanGlow"></i>
+              </div>
+              <div class="glass-box rounded-2xl rounded-tl-none p-3 border border-white/15 text-slate-200 max-w-[85%] leading-relaxed">
+                Namaste! 🌊<br />
+                I'm your ocean intelligence assistant. How can I help you today?
+                <div class="text-[9px] font-mono text-slate-400 mt-1">10:30 AM</div>
+              </div>
+            </div>
+
+            <div class="flex items-start justify-end gap-2">
+              <div class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] leading-relaxed shadow-sm">
+                Show me the best fishing zones in Arabian Sea.
+                <div class="text-[9px] font-mono text-cyan-200 mt-1 text-right">10:31 AM ✓✓</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2.5">
+              <div class="w-6 h-6 rounded-full bg-cyanGlow/20 border border-cyanGlow/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i data-lucide="bot" class="w-3.5 h-3.5 text-cyanGlow"></i>
+              </div>
+              <div class="glass-box rounded-2xl rounded-tl-none p-3 border border-white/15 text-slate-200 max-w-[85%] leading-relaxed">
+                Based on the latest data, <span class="text-cyanGlow font-semibold">PFZ-03</span> and <span class="text-cyanGlow font-semibold">PFZ-05</span> show <span class="text-emerald-400 font-semibold">highest</span> fishing potential with strong productivity indicators. You can <span class="underline cursor-pointer text-cyanGlow" onclick="mapInstance.flyTo([14.6, 70.2], 7)">check</span> them on the map.
+                <div class="text-[9px] font-mono text-slate-400 mt-1">10:31 AM</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Composer -->
+          <form id="chat-form" onsubmit="handleChatSubmit(event)" class="mt-3 pt-2 border-t border-white/10 flex items-center gap-2">
+            <input 
+              id="chat-input-text" 
+              type="text" 
+              placeholder="Ask about the ocean..." 
+              autocomplete="off"
+              class="flex-1 glass-box rounded-full px-4 py-2 text-xs text-white placeholder:text-slate-400 border border-white/20 focus:outline-none focus:border-cyanGlow"
+            />
+            <button type="button" onclick="startVoiceRecognition()" class="w-8 h-8 rounded-full glass-box border border-white/20 flex items-center justify-center text-slate-300 hover:text-cyanGlow transition" title="Voice Input">
+              <i data-lucide="mic" class="w-4 h-4"></i>
+            </button>
+            <button type="submit" class="w-8 h-8 rounded-full bg-cyanGlow text-slate-950 flex items-center justify-center hover:brightness-110 active:scale-95 transition shadow-[0_0_10px_rgba(0,229,255,0.6)]">
+              <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </form>
+
+        </div>
+
+        <!-- Right: Live Buoy Telemetry -->
+        <div class="lg:col-span-3 glass-box rounded-2xl p-5 border border-cyanGlow/25 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-mono uppercase font-bold text-white tracking-wider">Telemetry Sync</h3>
+              <span class="w-2 h-2 rounded-full bg-cyanGlow animate-ping"></span>
+            </div>
+
+            <div class="space-y-2.5">
+              
+              <div onclick="focusFloat('ARGO-290241', 14.2, 68.9)" class="glass-box p-2.5 rounded-xl border border-white/10 hover:border-cyanGlow/50 cursor-pointer transition flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400 flex items-center justify-center text-amber-400 text-xs">
+                    <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white">ARGO-290241</div>
+                    <div class="text-[10px] font-mono text-slate-300">Temp: 27.4°C · Depth: 612m</div>
+                  </div>
+                </div>
+                <span class="text-[9px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">LIVE</span>
+              </div>
+
+              <div onclick="focusFloat('ARGO-290242', 17.6, 66.1)" class="glass-box p-2.5 rounded-xl border border-white/10 hover:border-cyanGlow/50 cursor-pointer transition flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400 flex items-center justify-center text-amber-400 text-xs">
+                    <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white">ARGO-290242</div>
+                    <div class="text-[10px] font-mono text-slate-300">Temp: 26.8°C · Depth: 481m</div>
+                  </div>
+                </div>
+                <span class="text-[9px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">LIVE</span>
+              </div>
+
+              <div onclick="focusFloat('ARGO-290243', 9.4, 76.8)" class="glass-box p-2.5 rounded-xl border border-white/10 hover:border-cyanGlow/50 cursor-pointer transition flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400 flex items-center justify-center text-amber-400 text-xs">
+                    <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white">ARGO-290243</div>
+                    <div class="text-[10px] font-mono text-slate-300">Temp: 28.1°C · Depth: 725m</div>
+                  </div>
+                </div>
+                <span class="text-[9px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">LIVE</span>
+              </div>
+
+            </div>
+          </div>
+
+          <a href="#map" onclick="mapInstance.flyTo([14.0, 75.0], 5)" class="mt-3 text-xs font-mono text-cyanGlow hover:text-white flex items-center justify-between pt-2 border-t border-white/10 transition">
+            <span>View All Floats</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+
+      </div>
+
+    </main>
+  </section>
+
+  <audio id="ocean-audio" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b417e296.mp3?filename=ocean-waves-ambient-110057.mp3"></audio>
+
+  <!-- ============================================================
+       APPLICATION LOGIC & LEAFLET ENGINE
+       ============================================================ -->
+  <script>
+    // 1. Particle Systems
+    function setupBubbleSystem(canvasId, count = 40) {
+      const c = document.getElementById(canvasId);
+      if (!c) return;
+      const context = c.getContext('2d');
+      let arr = [];
+
+      function res() {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+      }
+      window.addEventListener('resize', res);
+      res();
+
+      for (let i = 0; i < count; i++) {
+        arr.push({
+          x: Math.random() * c.width,
+          y: Math.random() * c.height,
+          radius: Math.random() * 4 + 1.5,
+          speed: Math.random() * 1.5 + 0.8,
+          opacity: Math.random() * 0.5 + 0.3
+        });
+      }
+
+      function loop() {
+        context.clearRect(0, 0, c.width, c.height);
+        arr.forEach(b => {
+          b.y -= b.speed;
+          b.x += Math.sin(b.y * 0.02) * 0.6;
+          if (b.y < -10) {
+            b.y = c.height + 10;
+            b.x = Math.random() * c.width;
+          }
+          context.beginPath();
+          context.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+          context.fillStyle = `rgba(0, 229, 255, ${b.opacity})`;
+          context.fill();
+          context.strokeStyle = `rgba(255, 255, 255, ${b.opacity * 0.6})`;
+          context.stroke();
+        });
+        requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    setupBubbleSystem('bubble-canvas', 40);
+    setupBubbleSystem('dive-bubble-canvas', 60);
+
+    // 2. Clean Navigation Transitions
+    function startDiveTransition() {
+      const landing = document.getElementById('section-landing');
+      const diving = document.getElementById('section-diving');
+      const controlRoom = document.getElementById('section-control-room');
+      const progress = document.getElementById('dive-progress');
+
+      landing.classList.add('hidden');
+      diving.classList.remove('hidden');
+      diving.classList.add('flex');
+
+      let width = 0;
+      const interval = setInterval(() => {
+        width += 3.5;
+        progress.style.width = width + '%';
+        if (width >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            diving.classList.add('hidden');
+            diving.classList.remove('flex');
+            controlRoom.classList.remove('hidden');
+            controlRoom.classList.add('flex');
+            initMap();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 350);
+        }
+      }, 70);
+    }
+
+    function goToLanding() {
+      document.getElementById('section-control-room').classList.add('hidden');
+      document.getElementById('section-control-room').classList.remove('flex');
+      document.getElementById('section-diving').classList.add('hidden');
+      document.getElementById('section-diving').classList.remove('flex');
+      document.getElementById('section-landing').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 3. Leaflet Ocean Map
+    let mapInstance = null;
+    let satLayer = null;
+    let oceanLayer = null;
+
+    const floatCoordinates = [
+      { id: 'ARGO-290241', lat: 14.2, lon: 68.9, temp: 27.4, depth: 612 },
+      { id: 'ARGO-290242', lat: 17.6, lon: 66.1, temp: 26.8, depth: 481 },
+      { id: 'ARGO-290243', lat: 9.4, lon: 76.8, temp: 28.1, depth: 725 },
+      { id: 'ARGO-290244', lat: 11.8, lon: 72.4, temp: 28.4, depth: 530 },
+      { id: 'ARGO-290245', lat: 16.9, lon: 84.2, temp: 28.9, depth: 890 },
+      { id: 'ARGO-290246', lat: 7.2, lon: 79.5, temp: 29.2, depth: 640 },
+      { id: 'ARGO-290247', lat: 19.5, lon: 86.8, temp: 27.9, depth: 510 },
+      { id: 'ARGO-290248', lat: 12.5, lon: 88.0, temp: 28.7, depth: 920 },
+    ];
+
+    const pfzCoordinates = [
+      { id: 'PFZ-01', lat: 18.2, lon: 69.8, name: 'Off Mumbai/Ratnagiri' },
+      { id: 'PFZ-02', lat: 14.6, lon: 73.1, name: 'Goa Coastal Front' },
+      { id: 'PFZ-03', lat: 10.2, lon: 75.4, name: 'Kochi Deep Shoal' },
+      { id: 'PFZ-04', lat: 17.2, lon: 83.9, name: 'Visakhapatnam Shelf' },
+      { id: 'PFZ-05', lat: 8.5, lon: 77.8, name: 'Gulf of Mannar' },
+    ];
+
+    function initMap() {
+      if (mapInstance) {
+        setTimeout(() => mapInstance.invalidateSize(), 150);
+        return;
+      }
+
+      mapInstance = L.map('map', { zoomControl: false }).setView([13.5, 75.5], 5);
+
+      oceanLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri, GEBCO, NOAA',
+        maxZoom: 13,
+      }).addTo(mapInstance);
+
+      satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri Satellite',
+        maxZoom: 18,
+      });
+
+      const argoIcon = L.divIcon({
+        className: '',
+        html: '<div class="argo-marker"></div>',
+        iconSize: [14, 14],
+      });
+
+      floatCoordinates.forEach(f => {
+        L.marker([f.lat, f.lon], { icon: argoIcon }).addTo(mapInstance)
+          .bindPopup(`
+            <div class="font-sans text-xs p-1">
+              <strong class="text-amber-400 font-bold">${f.id}</strong><br />
+              <span>SST: ${f.temp}°C</span><br />
+              <span>Depth: ${f.depth}m</span><br />
+              <button onclick="sendQuickPrompt('Analyze telemetry for ${f.id}')" class="mt-2 w-full bg-cyan-400 text-slate-950 font-bold py-1 px-2 rounded-lg text-[10px]">Query Float</button>
+            </div>
+          `);
+      });
+
+      const pfzIcon = L.divIcon({
+        className: '',
+        html: '<div class="pfz-marker"><i data-lucide="fish" style="width:14px;height:14px;color:#ffffff;"></i></div>',
+        iconSize: [28, 28],
+      });
+
+      pfzCoordinates.forEach(p => {
+        L.marker([p.lat, p.lon], { icon: pfzIcon }).addTo(mapInstance)
+          .bindPopup(`
+            <div class="font-sans text-xs p-1">
+              <strong class="text-emerald-400 font-bold">${p.id} — ${p.name}</strong><br />
+              <span class="text-slate-300">High Chlorophyll Bloom & Thermal Boundary</span>
+            </div>
+          `);
+      });
+
+      setTimeout(() => lucide.createIcons(), 200);
+    }
+
+    function switchBaseMap(type) {
+      const btnOcean = document.getElementById('btn-layer-ocean');
+      const btnSat = document.getElementById('btn-layer-sat');
+
+      if (type === 'ocean') {
+        mapInstance.removeLayer(satLayer);
+        oceanLayer.addTo(mapInstance);
+        btnOcean.className = 'px-3 py-1.5 rounded-lg bg-cyanGlow text-slate-950 shadow-sm transition';
+        btnSat.className = 'px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition';
+      } else {
+        mapInstance.removeLayer(oceanLayer);
+        satLayer.addTo(mapInstance);
+        btnSat.className = 'px-3 py-1.5 rounded-lg bg-cyanGlow text-slate-950 shadow-sm transition';
+        btnOcean.className = 'px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition';
+      }
+    }
+
+    function focusFloat(id, lat, lon) {
+      mapInstance.flyTo([lat, lon], 7, { duration: 1.2 });
+      sendQuickPrompt(`Tell me telemetry details for float ${id}`);
+    }
+
+    function toggleFullScreenMap() {
+      const mapEl = document.getElementById('map');
+      if (!document.fullscreenElement) {
+        mapEl.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // 4. Interactive Chatbot Engine
+    function toggleChatInterface() {
+      const chatSection = document.getElementById('chatbot-dashboard-section');
+      chatSection.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('chat-input-text').focus();
+    }
+
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input-text');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      appendChatMessage('user', msg);
+      input.value = '';
+
+      setTimeout(() => generateBotReply(msg), 500);
+    }
+
+    function sendQuickPrompt(promptText) {
+      appendChatMessage('user', promptText);
+      setTimeout(() => generateBotReply(promptText), 400);
+    }
+
+    function appendChatMessage(sender, text) {
+      const thread = document.getElementById('chat-thread');
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const row = document.createElement('div');
+      if (sender === 'user') {
+        row.className = 'flex items-start justify-end gap-2';
+        row.innerHTML = `
+          <div class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] leading-relaxed shadow-sm">
+            ${text}
+            <div class="text-[9px] font-mono text-cyan-200 mt-1 text-right">${timeStr} ✓✓</div>
+          </div>
+        `;
+      } else {
+        row.className = 'flex items-start gap-2.5';
+        row.innerHTML = `
+          <div class="w-6 h-6 rounded-full bg-cyanGlow/20 border border-cyanGlow/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i data-lucide="bot" class="w-3.5 h-3.5 text-cyanGlow"></i>
+          </div>
+          <div class="glass-box rounded-2xl rounded-tl-none p-3 border border-white/15 text-slate-200 max-w-[85%] leading-relaxed">
+            ${text}
+            <div class="text-[9px] font-mono text-slate-400 mt-1">${timeStr}</div>
+          </div>
+        `;
+      }
+
+      thread.appendChild(row);
+      thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function generateBotReply(userText) {
+      const persona = document.getElementById('persona-select').value;
+      const lower = userText.toLowerCase();
+      let reply = '';
+
+      if (lower.includes('fish') || lower.includes('pfz') || lower.includes('catch')) {
+        mapInstance.flyTo([14.6, 70.2], 6);
+        reply = persona === 'researcher'
+          ? 'PFZ gradient analysis indicates high chlorophyll-a concentration (>0.9 mg/m³) intersecting SST boundary of 28.1°C off Ratnagiri & Kochi.'
+          : 'High catch probability detected at PFZ-03 and PFZ-05. Wind speed is 12 knots, safe for traditional and motorized crafts.';
+      } else if (lower.includes('sea') || lower.includes('swell') || lower.includes('condition')) {
+        reply = 'Current sea state is slight to moderate with wave height ~1.3m and wind from WSW at 14 knots. Navigation safe within 15 nautical miles.';
+      } else if (lower.includes('argo') || lower.includes('telemetry') || lower.includes('temp')) {
+        reply = 'ARGO telemetry sync active across 8 reporting buoys. Average Arabian Sea SST is 27.8°C with mean salinity 35.2 PSU.';
+      } else if (lower.includes('alert') || lower.includes('safe')) {
+        reply = 'No severe cyclonic depression in the next 48 hours. Safe venturing permitted for coastal fleets.';
+      } else {
+        reply = `Telemetry indexed for ${persona} mode. You can click any yellow buoy on the map or ask about wave heights and potential fishing zones.`;
+      }
+
+      appendChatMessage('bot', reply);
+    }
+
+    // 5. Soundscape & Voice Controls
+    const audio = document.getElementById('ocean-audio');
+    const soundBtn = document.getElementById('soundscape-toggle');
+    let isPlaying = false;
+
+    soundBtn.addEventListener('click', () => {
+      if (!isPlaying) {
+        audio.play().catch(() => {});
+        isPlaying = true;
+        document.getElementById('soundscape-icon').setAttribute('data-lucide', 'pause');
+      } else {
+        audio.pause();
+        isPlaying = false;
+        document.getElementById('soundscape-icon').setAttribute('data-lucide', 'play');
+      }
+      lucide.createIcons();
+    });
+
+    function startVoiceRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Speech recognition is not supported in this browser.');
+        return;
+      }
+      const recognizer = new SpeechRecognition();
+      const lang = document.getElementById('language-select').value;
+      recognizer.lang = lang === 'hi' ? 'hi-IN' : lang === 'ta' ? 'ta-IN' : 'en-IN';
+      recognizer.start();
+      recognizer.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        sendQuickPrompt(text);
+      };
+    }
+
+    lucide.createIcons();
+  </script>
 </body>
 </html>
