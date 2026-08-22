@@ -33,7 +33,20 @@
       --nav-bg: rgba(2, 9, 20, 0.94);
       --nav-accent-line: #0284c7; /* Subtle clean blue accent line under nav */
       --search-glow: 0 0 45px rgba(56, 189, 248, 0.55), 0 0 100px rgba(2, 132, 199, 0.35);
-      --map-filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+      /* 1. Dark Bathymetry Ocean Filter (Produces the exact look in your screenshot) */
+[data-theme="dark"] .dark-ocean-tiles {
+  filter: brightness(0.75) invert(1) contrast(2.6) hue-rotate(200deg) saturate(0.35) brightness(0.75);
+}
+
+/* 2. Light Theme Ocean Filter (Normal default ocean colors) */
+[data-theme="light"] .dark-ocean-tiles {
+  filter: none;
+}
+
+/* 3. Satellite Layer (Always 100% natural photo color in both dark and light modes) */
+.dark-sat-tiles {
+  filter: none !important;
+}
     }
 
     [data-theme="light"] {
@@ -126,7 +139,7 @@
     }
 
     .wave-container {
-      position: absolute;
+      position: absolute; 
       bottom: 24px;
       display: flex;
       align-items: flex-end;
@@ -410,7 +423,6 @@
     }
 
     .video-panel-frame {
-      border-radius: 16px;
       overflow: hidden;
       aspect-ratio: 16 / 9;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
@@ -420,6 +432,12 @@
       width: 100%;
       height: 100%;
       border: none;
+    }
+
+    .video-panel-frame img{
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
 
     .about-text-content h2 {
@@ -716,7 +734,7 @@
     <nav class="slide-navbar">
       
       <!-- Brand & Logo Container -->
-      <div class="nav-brand-container">
+      <div class="nav-brand-container" onclick="scrollToTop()">
         <!-- 
           ==========================================================
           INSERT YOUR CUSTOM LOGO HERE:
@@ -731,7 +749,7 @@
       <!-- Evenly Spaced Centered Navigation Links -->
       <div class="nav-center-menu">
         <ul class="nav-links">
-          <li><a href="#hero-slide">Home</a></li>
+          <li><a href="#hero-slide" onclick="scrollToTop()">Home</a></li>
           <li><a href="#about-slide">About Us</a></li>
           <li><a href="#map-slide">Map</a></li>
           <li><a href="#chat-slide">Chatbot</a></li>
@@ -771,32 +789,25 @@
           </iframe>
         </div>
         <div class="about-text-content">
-          <h2>Turning Complex Ocean Intelligence into Actionable Decisions</h2>
+          <h2>About Us</h2>
           <p>
-            Sagar Mitra bridges conversational AI with ARGO profiling floats and satellite telemetry[cite: 1, 2]. 
-            We transform raw oceanographic datasets into automated natural language insights, depth safety diagnostics, 
-            and high-yield Potential Fishing Zone (PFZ) advisories for coastal communities, students, and researchers[cite: 1, 2].
-          </p>
+            Beneath every wave is a story most people never get to read. Sagar Mitra listens to it through a fleet of autonomous ARGO floats
+            and log various parameters at every metre and send the finished profile home the moment they resurface.
+            We run that raw signal through a statistical baseline model tuned to catch different anomalies, turning a dataset into something a fisherman, student or researcher can use.
         </div>
       </div>
 
       <!-- Row 2: About Us on the Left, Video on the Right -->
       <div class="split-row">
         <div class="about-text-content">
-          <h2>Autonomous Real-Time Hydrographic Intelligence</h2>
+          <h2>ARGO Floats</h2>
           <p>
-            By integrating international TEOS-10 physical seawater formulations with localized climatological baselines, 
-            our intelligence engine automatically flags marine heatwaves, thermocline displacements, and barrier layer formations[cite: 1, 2]. 
-            This provides marine stakeholders with clear, regional voice advisories before entering the sea[cite: 1].
+            Argo floats are autonomous profiling probes that capture vertical ocean measurements using sensors to record pressure, temperature, and salinity. Over a series of 10 continuous days, they go to a depth of 2000m in the ocean and while coming back, capture th readings required for our dataset.
           </p>
         </div>
         <div class="video-panel-frame">
-          <iframe 
-            src="https://www.youtube-nocookie.com/embed/ScMzIvxBSi4?enablejsapi=1&rel=0&modestbranding=1" 
-            title="Field Demonstration 2" 
-            allow="autoplay; encrypted-media" 
-            allowfullscreen>
-          </iframe>
+          <img src="image.png" alt="Argo Float Growth Graph" 
+    style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block;">
         </div>
       </div>
 
@@ -811,7 +822,7 @@
       <div class="map-header">
         <div>
           <h3>Interactive Hydrography Map</h3>
-          <p style="color: var(--text-sub); font-size: 0.9rem;">Live ARGO telemetry buoys & high-biomass fishing zones in the Indian Ocean Basin[cite: 2].</p>
+          <p style="color: var(--text-sub); font-size: 0.9rem;">Live ARGO telemetry buoys & high-biomass fishing zones in the Indian Ocean Basin.</p>
         </div>
         <div style="display:flex; gap:12px;">
           <button onclick="setMapBase('ocean')" style="background:var(--accent-cyan); color:#020914; border:none; padding:6px 14px; border-radius:6px; font-weight:700; cursor:pointer;">Ocean</button>
@@ -936,6 +947,14 @@
     // -------------------------------------------------------------
     // 4. THEME TOGGLE (Deep Navy Dark / Light Ocean)
     // -------------------------------------------------------------
+    function scrollToTop() {
+  const heroSection = document.getElementById("#hero-slide");
+  if (heroSection) {
+    heroSection.scrollIntoView({ behavior: "smooth" });
+  } else {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
     const themeBtn = document.getElementById("themeToggle");
     const themeIcon = document.getElementById("themeIcon");
     const themeLabel = document.getElementById("themeLabel");
@@ -976,16 +995,17 @@
     // 6. LEAFLET MAP INITIALIZATION & ARGO DATA
     // -------------------------------------------------------------
     const map = L.map("oceanMap", { center: [13.5, 75.5], zoom: 5, zoomControl: false });
-    const oceanLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 13 }).addTo(map);
-    const satLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+    const oceanLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", {className: 'dark-ocean-tiles',
+  maxZoom: 13}).addTo(map);
+    const satLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { className: 'dark-sat-tiles', maxZoom: 18 });
 
     function setMapBase(type) {
       if (type === "ocean") {
-        map.removeLayer(satLayer);
-        oceanLayer.addTo(map);
+        if (map.hasLayer(satLayer)) map.removeLayer(satLayer);
+    oceanLayer.addTo(map);
       } else {
-        map.removeLayer(oceanLayer);
-        satLayer.addTo(map);
+        if (map.hasLayer(oceanLayer)) map.removeLayer(oceanLayer);
+    satLayer.addTo(map);
       }
     }
 
