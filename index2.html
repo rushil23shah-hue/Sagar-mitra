@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAGAR MITRA — FloatChat Intelligence Platform</title>
+
+  <!-- Preconnect & Preload Video Assets for Immediate Playback -->
+  <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+  <link rel="preconnect" href="https://www.google.com" />
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* -------------------------------------------------------------
+       THEME VARIABLES (DARK NAVY / LIGHT OCEAN)
+       ------------------------------------------------------------- */
+    :root {
+      --bg-color: #020914; /* Deep Navy Blue, almost pitch black */
+      --bg-alt: #041021;
+      --card-bg: rgba(6, 18, 36, 0.75);
+      --card-border: transparent; /* Clean borders in dark mode */
+      --text-main: #ffffff;
+      --text-sub: #94a3b8;
+      --accent-cyan: #38bdf8;
+      --nav-bg: rgba(2, 9, 20, 0.94);
+      --nav-accent-line: #0284c7; /* Subtle clean blue accent line under nav */
+      --search-glow: 0 0 45px rgba(56, 189, 248, 0.55), 0 0 100px rgba(2, 132, 199, 0.35);
+      --map-filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f0f7fc;
+      --bg-alt: #e1effa;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: #cbd5e1;
+      --text-main: #061a2e;
+      --text-sub: #475569;
+      --accent-cyan: #0284c7;
+      --nav-bg: rgba(240, 247, 252, 0.95);
+      --nav-accent-line: #38bdf8;
+      --search-glow: 0 0 45px rgba(2, 132, 199, 0.45), 0 0 90px rgba(56, 189, 248, 0.3);
+      --map-filter: none;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    /* -------------------------------------------------------------
+       1. LOADING SCREEN WITH PRELOADED VIDEO BG & WHITE BARS
+       ------------------------------------------------------------- */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #020914;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      transition: opacity 1s ease, visibility 1s ease;
+      overflow: hidden;
+    }
+
+    .video-background {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .video-background iframe {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100vw;
+      height: 56.25vw;
+      min-height: 100vh;
+      min-width: 177.77vh;
+      transform: translate(-50%, -50%);
+      border: none;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(2, 9, 20, 0.4) 0%, rgba(2, 9, 20, 0.88) 100%);
+      z-index: 2;
+    }
+
+    .loader-box {
+      position: relative;
+      z-index: 3;
+      width: 10px;
+      height: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .wave-container {
+      position: absolute;
+      bottom: 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3.5px;
+      height: 60px;
+      width: 200px;
+    }
+
+    /* Pure Solid White Bars */
+    .bar {
+      width: 11px;
+      height: 16px;
+      background-color: #ffffff;
+      border-radius: 2px 2px 0 0;
+      transform-origin: bottom;
+      animation: waveFlowWhite 1.5s ease-in-out infinite;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    }
+
+    .bar-1 { animation-delay: 0.00s; }
+    .bar-2 { animation-delay: 0.15s; }
+    .bar-3 { animation-delay: 0.30s; }
+    .bar-4 { animation-delay: 0.45s; }
+    .bar-5 { animation-delay: 0.60s; }
+    .bar-6 { animation-delay: 0.75s; }
+    .bar-7 { animation-delay: 0.90s; }
+    .bar-8 { animation-delay: 1.05s; }
+    .bar-9 { animation-delay: 1.20s; }
+
+    @keyframes waveFlowWhite {
+      0%, 100% { height: 14px; opacity: 0.6; }
+      50% { height: 56px; opacity: 1; }
+    }
+
+    .loading-text {
+      position: absolute;
+      top: 24px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+      transition: opacity 0.4s ease-in-out;
+    }
+
+    .verb-fade { opacity: 0; }
+    .fade-out { opacity: 0; visibility: hidden; }
+
+    /* -------------------------------------------------------------
+       2. STICKY OVERLAPPING SLIDE SECTIONS
+       ------------------------------------------------------------- */
+    /* Hero Header is pinned in place */
+    #hero-slide {
+      position: sticky;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--bg-color);
+      z-index: 1;
+    }
+
+    /* All subsequent sections slide and overlap directly on top */
+    .overlapping-slide {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      background-color: var(--bg-color);
+      box-shadow: 0 -25px 50px rgba(0, 0, 0, 0.9);
+      transition: background-color 0.4s ease;
+    }
+
+    #about-slide { z-index: 10; }
+    #map-slide   { z-index: 20; }
+    #chat-slide  { z-index: 30; }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      width: 100%;
+      max-width: 1100px;
+      padding: 0 20px;
+      overflow: hidden;
+    }
+
+    /* Scaled Up Heading Size */
+    .hero-title {
+      font-size: clamp(3.8rem, 8.5vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-shadow: 0 4px 35px rgba(0, 0, 0, 0.95);
+      min-height: 7.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 0 auto;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s ease-in-out;
+    }
+
+    .hero-title.slide-enter-left { transform: translateX(-180px); opacity: 0; }
+    .hero-title.slide-exit-right { transform: translateX(180px); opacity: 0; }
+
+    .hero-subtitle {
+      font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+      font-weight: 500;
+      color: #bae6fd;
+      margin-top: 16px;
+      letter-spacing: 0.8px;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+      width: 100%;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 28px;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: #bae6fd;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-decoration: none;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+      60% { transform: translateY(-4px); }
+    }
+
+    /* -------------------------------------------------------------
+       3. TOP NAVBAR (CENTERED LINKS + BLUE ACCENT LINE)
+       ------------------------------------------------------------- */
+    .slide-navbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(14px);
+      border-bottom: 2px solid var(--nav-accent-line); /* Clean blue line separator */
+    }
+
+    .nav-brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    /* Custom Logo Placeholder */
+    .custom-logo-img {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .nav-brand-text {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 1.5px;
+      color: var(--accent-cyan);
+    }
+
+    /* Evenly Spaced & Centered Navigation Links */
+    .nav-center-menu {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 40px; /* Evenly spaced */
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--accent-cyan); }
+
+    .nav-right-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 220px;
+      justify-content: flex-end;
+    }
+
+    .soundscape-widget {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+    }
+
+    .sound-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2.5px;
+      height: 14px;
+    }
+
+    .s-bar {
+      width: 2.5px;
+      background: var(--accent-cyan);
+      border-radius: 2px;
+      animation: soundwave 1.2s infinite ease-in-out;
+    }
+    .s-bar:nth-child(1) { height: 4px; animation-delay: 0.0s; }
+    .s-bar:nth-child(2) { height: 12px; animation-delay: 0.2s; }
+    .s-bar:nth-child(3) { height: 8px; animation-delay: 0.4s; }
+    .s-bar:nth-child(4) { height: 14px; animation-delay: 0.1s; }
+
+    @keyframes soundwave {
+      0%, 100% { height: 4px; }
+      50% { height: 14px; }
+    }
+
+    .theme-toggle-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* -------------------------------------------------------------
+       4. ABOUT US SLIDE (DUAL ALTERNATING SECTIONS - NO BOXES)
+       ------------------------------------------------------------- */
+    .about-sections-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 50px 32px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 70px;
+    }
+
+    .split-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      align-items: center;
+    }
+
+    .video-panel-frame {
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .video-panel-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .about-text-content h2 {
+      font-size: clamp(2.2rem, 3.8vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--accent-cyan);
+      margin-bottom: 18px;
+    }
+
+    .about-text-content p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-sub);
+    }
+
+    /* -------------------------------------------------------------
+       5. MAP SECTION
+       ------------------------------------------------------------- */
+    .map-slide-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: calc(100vh - 80px);
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .map-header h3 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .map-wrapper {
+      position: relative;
+      flex: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    #oceanMap {
+      width: 100%;
+      height: 100%;
+    }
+
+    .leaflet-tile-pane {
+      filter: var(--map-filter);
+      transition: filter 0.4s ease;
+    }
+
+    .argo-marker {
+      width: 13px;
+      height: 13px;
+      background: #facc15;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 14px #facc15;
+    }
+
+    .pfz-marker {
+      width: 26px;
+      height: 26px;
+      background: rgba(16, 185, 129, 0.4);
+      border: 2px solid #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px #10b981;
+    }
+
+    /* -------------------------------------------------------------
+       6. CHATBOT INTERFACE (RADIATING GLOW SEARCH SPACE)
+       ------------------------------------------------------------- */
+    .chat-slide-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      min-height: calc(100vh - 80px);
+      justify-content: center;
+    }
+
+    .chat-output-box {
+      width: 100%;
+      min-height: 180px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-right: 8px;
+    }
+
+    .chat-bubble-user {
+      align-self: flex-end;
+      background: #0284c7;
+      color: #ffffff;
+      padding: 14px 20px;
+      border-radius: 20px 20px 4px 20px;
+      font-size: 0.95rem;
+      max-width: 80%;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+    }
+
+    .chat-bubble-bot {
+      align-self: flex-start;
+      background: var(--card-bg);
+      color: var(--text-main);
+      padding: 16px 22px;
+      border-radius: 20px 20px 20px 4px;
+      font-size: 0.95rem;
+      max-width: 85%;
+      line-height: 1.6;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .radiating-search-bar {
+      position: relative;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 40px;
+      padding: 8px 12px 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--search-glow);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
+    }
+
+    .radiating-search-bar:focus-within {
+      box-shadow: 0 0 65px rgba(56, 189, 248, 0.85), 0 0 120px rgba(2, 132, 199, 0.5);
+      border-color: #38bdf8;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 1.05rem;
+      font-family: inherit;
+    }
+
+    .search-input::placeholder { color: var(--text-sub); }
+
+    .search-send-btn {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-cyan);
+      border: none;
+      border-radius: 50%;
+      color: #020914;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 16px var(--accent-cyan);
+      transition: transform 0.2s ease;
+    }
+
+    .search-send-btn:hover { transform: scale(1.06); }
+
+    .chat-processing-indicator {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      align-self: flex-start;
+    }
+
+    .mini-wave {
+      display: flex;
+      align-items: flex-end;
+      gap: 2.5px;
+      height: 24px;
+    }
+
+    .mini-bar {
+      width: 4px;
+      height: 6px;
+      background-color: var(--accent-cyan);
+      border-radius: 1px 1px 0 0;
+      animation: miniWaveAnim 1.2s infinite ease-in-out;
+    }
+    .mini-bar:nth-child(1) { animation-delay: 0.0s; }
+    .mini-bar:nth-child(2) { animation-delay: 0.15s; }
+    .mini-bar:nth-child(3) { animation-delay: 0.3s; }
+    .mini-bar:nth-child(4) { animation-delay: 0.45s; }
+    .mini-bar:nth-child(5) { animation-delay: 0.6s; }
+
+    @keyframes miniWaveAnim {
+      0%, 100% { height: 6px; }
+      50% { height: 22px; }
+    }
+
+    .mini-verb-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      letter-spacing: 0.8px;
+    }
+
+    @media (max-width: 900px) {
+      .split-row { grid-template-columns: 1fr; }
+      .slide-navbar { padding: 16px 20px; }
+      .nav-links { gap: 20px; }
+      .nav-brand-container, .nav-right-controls { min-width: auto; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- ============================================================
+       1. 10x10 PIXEL LOADING SCREEN (INSTANT PRELOAD VIDEO + WHITE BARS)
+       ============================================================ -->
+  <div id="loading-screen">
+    <div class="video-background">
+      <!-- Loading Screen Background Video (-U5_GOl4Uhc) with priority loading -->
+      <iframe 
+        id="loadBgVideo"
+        src="https://www.youtube-nocookie.com/embed/-U5_GOl4Uhc?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=-U5_GOl4Uhc&start=5&end=24&enablejsapi=1" 
+        allow="autoplay; encrypted-media" 
+        loading="eager"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="loading-overlay"></div>
+
+    <div class="loader-box">
+      <div class="wave-container">
+        <span class="bar bar-1"></span>
+        <span class="bar bar-2"></span>
+        <span class="bar bar-3"></span>
+        <span class="bar bar-4"></span>
+        <span class="bar bar-5"></span>
+        <span class="bar bar-6"></span>
+        <span class="bar bar-7"></span>
+        <span class="bar bar-8"></span>
+        <span class="bar bar-9"></span>
+      </div>
+      <p class="loading-text" id="oceanVerbText">Surfing...</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SECTION 1: HERO HOMEPAGE (RESTORED ORIGINAL VIDEO: 1ne9Zt5kL1k)
+       ============================================================ -->
+  <section id="hero-slide">
+    <div class="video-background">
+      <!-- Original Dolphin Video Restored -->
+      <iframe 
+        id="heroBgVideo"
+        src="https://www.youtube-nocookie.com/embed/IHJjbYlwPqI?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=IHJjbYlwPqI&start=24&end=60&enablejsapi=1" 
+        allow="autoplay; encrypted-media" 
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="loading-overlay"></div>
+
+    <div class="hero-content">
+      <h1 class="hero-title" id="languageTitle">Sagar Mitra</h1>
+      <p class="hero-subtitle">Conversational Ocean Data Discovery & Anomaly Intelligence</p>
+    </div>
+
+    <a href="#about-slide" class="scroll-indicator">
+      <span>Explore Platform</span>
+      <span>↓</span>
+    </a>
+  </section>
+
+  <!-- ============================================================
+       SECTION 2: ABOUT US (OVERLAPPING SLIDE & DUAL ALTERNATING ROWS)
+       ============================================================ -->
+  <section class="overlapping-slide" id="about-slide">
+    
+    <!-- Top Sticky Navbar with Evenly Spaced Centered Links & Blue Accent Line -->
+    <nav class="slide-navbar">
+      
+      <!-- Brand & Logo Container -->
+      <div class="nav-brand-container">
+        <!-- 
+          ==========================================================
+          INSERT YOUR CUSTOM LOGO HERE:
+          Uncomment the <img> tag below and replace 'logo.png' with your file.
+          ==========================================================
+        -->
+        <!-- <img src="logo.png" alt="Sagar Mitra Logo" class="custom-logo-img" /> -->
+        <span>🌊</span>
+        <span class="nav-brand-text">SAGAR MITRA</span>
+      </div>
+
+      <!-- Evenly Spaced Centered Navigation Links -->
+      <div class="nav-center-menu">
+        <ul class="nav-links">
+          <li><a href="#hero-slide">Home</a></li>
+          <li><a href="#about-slide">About Us</a></li>
+          <li><a href="#map-slide">Map</a></li>
+          <li><a href="#chat-slide">Chatbot</a></li>
+        </ul>
+      </div>
+
+      <!-- Right Nav Controls (Soundscape + Theme Toggle) -->
+      <div class="nav-right-controls">
+        <div class="soundscape-widget" id="soundToggle" title="Toggle Ocean Soundscape">
+          <i data-lucide="waves" class="w-4 h-4 text-cyan-400"></i>
+          <div class="sound-bars">
+            <span class="s-bar"></span>
+            <span class="s-bar"></span>
+            <span class="s-bar"></span>
+            <span class="s-bar"></span>
+          </div>
+        </div>
+        <button class="theme-toggle-btn" id="themeToggle">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Light</span>
+        </button>
+      </div>
+
+    </nav>
+
+    <!-- Dual Alternating About Us Content (No boxes) -->
+    <div class="about-sections-wrapper">
+      
+      <!-- Row 1: Video on the Left, About Us on the Right -->
+      <div class="split-row">
+        <div class="video-panel-frame">
+          <iframe 
+            src="https://www.youtube-nocookie.com/embed/-U5_GOl4Uhc?autoplay=1&mute=1&controls=0&rel=0&loop=1&playlist=-U5_GOl4Uhc" 
+            title="Field Demonstration 1" 
+            allow="autoplay; encrypted-media" 
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="about-text-content">
+          <h2>Turning Complex Ocean Intelligence into Actionable Decisions</h2>
+          <p>
+            Sagar Mitra bridges conversational AI with ARGO profiling floats and satellite telemetry[cite: 1, 2]. 
+            We transform raw oceanographic datasets into automated natural language insights, depth safety diagnostics, 
+            and high-yield Potential Fishing Zone (PFZ) advisories for coastal communities, students, and researchers[cite: 1, 2].
+          </p>
+        </div>
+      </div>
+
+      <!-- Row 2: About Us on the Left, Video on the Right -->
+      <div class="split-row">
+        <div class="about-text-content">
+          <h2>Autonomous Real-Time Hydrographic Intelligence</h2>
+          <p>
+            By integrating international TEOS-10 physical seawater formulations with localized climatological baselines, 
+            our intelligence engine automatically flags marine heatwaves, thermocline displacements, and barrier layer formations[cite: 1, 2]. 
+            This provides marine stakeholders with clear, regional voice advisories before entering the sea[cite: 1].
+          </p>
+        </div>
+        <div class="video-panel-frame">
+          <iframe 
+            src="https://www.youtube-nocookie.com/embed/ScMzIvxBSi4?enablejsapi=1&rel=0&modestbranding=1" 
+            title="Field Demonstration 2" 
+            allow="autoplay; encrypted-media" 
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 3: MAP SECTION (OVERLAPPING SLIDE)
+       ============================================================ -->
+  <section class="overlapping-slide" id="map-slide">
+    <div class="map-slide-container">
+      <div class="map-header">
+        <div>
+          <h3>Interactive Hydrography Map</h3>
+          <p style="color: var(--text-sub); font-size: 0.9rem;">Live ARGO telemetry buoys & high-biomass fishing zones in the Indian Ocean Basin[cite: 2].</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <button onclick="setMapBase('ocean')" style="background:var(--accent-cyan); color:#020914; border:none; padding:6px 14px; border-radius:6px; font-weight:700; cursor:pointer;">Ocean</button>
+          <button onclick="setMapBase('satellite')" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--card-border); padding:6px 14px; border-radius:6px; font-weight:700; cursor:pointer;">Satellite</button>
+        </div>
+      </div>
+
+      <div class="map-wrapper">
+        <div id="oceanMap"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 4: CHATBOT INTERFACE (OVERLAPPING SLIDE)
+       ============================================================ -->
+  <section class="overlapping-slide" id="chat-slide">
+    <div class="chat-slide-container">
+      
+      <!-- Output Thread -->
+      <div class="chat-output-box" id="chatOutput">
+        <!-- Exact Short Prompt as Requested -->
+        <div class="chat-bubble-bot">
+          Namaste! I am your Sagar Mitra Ocean Assistant. Ask me anything related to ocean.
+        </div>
+      </div>
+
+      <!-- Scaled-down Wave Processing Animation (Mini White/Cyan Wave) -->
+      <div class="chat-processing-indicator" id="chatLoader">
+        <div class="mini-wave">
+          <span class="mini-bar"></span>
+          <span class="mini-bar"></span>
+          <span class="mini-bar"></span>
+          <span class="mini-bar"></span>
+          <span class="mini-bar"></span>
+        </div>
+        <span class="mini-verb-text" id="miniVerbText">Surfing...</span>
+      </div>
+
+      <!-- Radiating Blue Light Search Bar -->
+      <form class="radiating-search-bar" id="chatForm" onsubmit="handleQuerySubmit(event)">
+        <i data-lucide="search" class="w-5 h-5 text-cyan-400"></i>
+        <input 
+          type="text" 
+          id="chatInput" 
+          class="search-input" 
+          placeholder="Ask Sagar Mitra about ocean anomalies, sea conditions, or floats..." 
+          autocomplete="off"
+        />
+        <button type="submit" class="search-send-btn">
+          <i data-lucide="arrow-up" class="w-5 h-5"></i>
+        </button>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- Ambient Ocean Audio Track -->
+  <audio id="oceanAudio" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b417e296.mp3?filename=ocean-waves-ambient-110057.mp3"></audio>
+
+  <script>
+    // -------------------------------------------------------------
+    // 1. OCEAN VERBS CYCLER (Every 3 seconds)
+    // -------------------------------------------------------------
+    const oceanVerbs = ["Surfing...", "Rippling...", "Crashing...", "Swimming...", "Floating...", "Sailing...", "Diving...", "Wading...", "Drifting..."];
+    let verbIdx = 0;
+    const verbEl = document.getElementById("oceanVerbText");
+    const miniVerbEl = document.getElementById("miniVerbText");
+
+    setInterval(() => {
+      verbIdx = (verbIdx + 1) % oceanVerbs.length;
+      if (verbEl) {
+        verbEl.classList.add("verb-fade");
+        setTimeout(() => {
+          verbEl.textContent = oceanVerbs[verbIdx];
+          verbEl.classList.remove("verb-fade");
+        }, 300);
+      }
+      if (miniVerbEl) miniVerbEl.textContent = oceanVerbs[verbIdx];
+    }, 3000);
+
+    // -------------------------------------------------------------
+    // 2. LOADING SCREEN DISMISSAL (10s max duration)
+    // -------------------------------------------------------------
+    window.addEventListener("load", () => {
+      const loader = document.getElementById("loading-screen");
+      setTimeout(() => {
+        loader.classList.add("fade-out");
+        setTimeout(() => {
+          loader.style.display = "none";
+          startLanguageRotation();
+        }, 1000);
+      }, 10000);
+    });
+
+    // -------------------------------------------------------------
+    // 3. MULTI-LANGUAGE HEADING (Smooth Left-to-Right Slide)
+    // -------------------------------------------------------------
+    const titleElement = document.getElementById("languageTitle");
+    const languages = [
+      "Sagar Mitra", "सागर मित्र", "સાગર મિત્ર", "सागर मित्र", 
+      "ಸಾಗರ ಮಿತ್ರ", "சாகர் மித்ரா", "సాగర్ మిత్ర", "സാഗർ മിത്ര", 
+      "সাগর মিত্র", "ਸਾਗਰ ਮਿੱਤਰ"
+    ];
+    let langIndex = 0;
+
+    function startLanguageRotation() {
+      setInterval(() => {
+        titleElement.className = "hero-title slide-exit-right";
+        setTimeout(() => {
+          langIndex = (langIndex + 1) % languages.length;
+          titleElement.textContent = languages[langIndex];
+          titleElement.style.transition = "none";
+          titleElement.className = "hero-title slide-enter-left";
+          void titleElement.offsetWidth;
+          titleElement.style.transition = "transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s ease-in-out";
+          titleElement.className = "hero-title";
+        }, 1500);
+      }, 6000);
+    }
+
+    // -------------------------------------------------------------
+    // 4. THEME TOGGLE (Deep Navy Dark / Light Ocean)
+    // -------------------------------------------------------------
+    const themeBtn = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    themeBtn.addEventListener("click", () => {
+      const isDark = document.body.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        document.body.setAttribute("data-theme", "light");
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "Dark";
+      } else {
+        document.body.setAttribute("data-theme", "dark");
+        themeIcon.textContent = "☀️";
+        themeLabel.textContent = "Light";
+      }
+    });
+
+    // -------------------------------------------------------------
+    // 5. OCEAN SOUNDSCAPE TOGGLE
+    // -------------------------------------------------------------
+    const audio = document.getElementById("oceanAudio");
+    const soundToggle = document.getElementById("soundToggle");
+    let audioPlaying = false;
+
+    soundToggle.addEventListener("click", () => {
+      if (!audioPlaying) {
+        audio.play().catch(() => {});
+        audioPlaying = true;
+        soundToggle.style.borderColor = "var(--accent-cyan)";
+      } else {
+        audio.pause();
+        audioPlaying = false;
+        soundToggle.style.borderColor = "var(--card-border)";
+      }
+    });
+
+    // -------------------------------------------------------------
+    // 6. LEAFLET MAP INITIALIZATION & ARGO DATA
+    // -------------------------------------------------------------
+    const map = L.map("oceanMap", { center: [13.5, 75.5], zoom: 5, zoomControl: false });
+    const oceanLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 13 }).addTo(map);
+    const satLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+
+    function setMapBase(type) {
+      if (type === "ocean") {
+        map.removeLayer(satLayer);
+        oceanLayer.addTo(map);
+      } else {
+        map.removeLayer(oceanLayer);
+        satLayer.addTo(map);
+      }
+    }
+
+    const floatData = [
+      { id: "ARGO-290241", lat: 14.2, lon: 68.9, temp: 27.4, depth: 612 },
+      { id: "ARGO-290242", lat: 17.6, lon: 66.1, temp: 26.8, depth: 481 },
+      { id: "ARGO-290243", lat: 9.4,  lon: 76.8, temp: 28.1, depth: 725 },
+      { id: "ARGO-290244", lat: 11.8, lon: 72.4, temp: 28.4, depth: 530 },
+      { id: "ARGO-290245", lat: 16.9, lon: 84.2, temp: 28.9, depth: 890 }
+    ];
+
+    const argoIcon = L.divIcon({ className: "", html: '<div class="argo-marker"></div>', iconSize: [13, 13] });
+    floatData.forEach(f => {
+      L.marker([f.lat, f.lon], { icon: argoIcon }).addTo(map)
+        .bindPopup(`<b>${f.id}</b><br>SST: ${f.temp}°C<br>Depth: ${f.depth}m`);
+    });
+
+    const pfzData = [
+      { id: "PFZ-01", lat: 18.2, lon: 69.8, name: "Ratnagiri Front" },
+      { id: "PFZ-02", lat: 10.2, lon: 75.4, name: "Kochi Shoal" }
+    ];
+
+    const pfzIcon = L.divIcon({ className: "", html: '<div class="pfz-marker">🐟</div>', iconSize: [26, 26] });
+    pfzData.forEach(p => {
+      L.marker([p.lat, p.lon], { icon: pfzIcon }).addTo(map)
+        .bindPopup(`<b>${p.id} — ${p.name}</b><br>High Biomass Aggregation Zone`);
+    });
+
+    // -------------------------------------------------------------
+    // 7. CHATBOT QUERY HANDLING WITH MINI WAVE LOADER
+    // -------------------------------------------------------------
+    function handleQuerySubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const outputBox = document.getElementById("chatOutput");
+      const loader = document.getElementById("chatLoader");
+
+      // 1. Append User Message
+      const userBubble = document.createElement("div");
+      userBubble.className = "chat-bubble-user";
+      userBubble.textContent = text;
+      outputBox.appendChild(userBubble);
+      input.value = "";
+
+      // 2. Show Scaled Wave Loader
+      loader.style.display = "flex";
+      outputBox.scrollTop = outputBox.scrollHeight;
+
+      // 3. Simulate Intelligent Ocean Response
+      setTimeout(() => {
+        loader.style.display = "none";
+        const botBubble = document.createElement("div");
+        botBubble.className = "chat-bubble-bot";
+
+        const lower = text.toLowerCase();
+        if (lower.includes("fish") || lower.includes("pfz")) {
+          botBubble.innerHTML = "🐟 <b>PFZ Advisory:</b> High pelagic fish aggregation detected near <b>PFZ-02 (Kochi Shoal)</b>. Mixed layer thermal gradient is optimal with safe sea conditions (<1.2m swell).";
+        } else if (lower.includes("argo") || lower.includes("float")) {
+          botBubble.innerHTML = "📊 <b>ARGO Telemetry Sync:</b> Float <b>ARGO-290241</b> reports sea surface temp of <b>27.4°C</b> and stable thermocline depth at <b>612m</b>.";
+        } else {
+          botBubble.innerHTML = `🌊 <b>Sagar Mitra Intelligence:</b> Processed query for Indian Ocean Basin. Stratification indices and telemetry are synchronized across active reporting floats.`;
+        }
+
+        outputBox.appendChild(botBubble);
+        outputBox.scrollTop = outputBox.scrollHeight;
+      }, 2500);
+    }
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>
