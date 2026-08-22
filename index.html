@@ -1037,24 +1037,48 @@
       loader.style.display = "flex";
       outputBox.scrollTop = outputBox.scrollHeight;
 
-      // 3. Simulate Intelligent Ocean Response
-      setTimeout(() => {
-        loader.style.display = "none";
-        const botBubble = document.createElement("div");
-        botBubble.className = "chat-bubble-bot";
+      // 3. Call the REAL Sagar Mitra backend
+      const API_BASE = "http://127.0.0.1:8000";
+      fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          loader.style.display = "none";
+          const botBubble = document.createElement("div");
+          botBubble.className = "chat-bubble-bot";
 
-        const lower = text.toLowerCase();
-        if (lower.includes("fish") || lower.includes("pfz")) {
-          botBubble.innerHTML = "🐟 <b>PFZ Advisory:</b> High pelagic fish aggregation detected near <b>PFZ-02 (Kochi Shoal)</b>. Mixed layer thermal gradient is optimal with safe sea conditions (<1.2m swell).";
-        } else if (lower.includes("argo") || lower.includes("float")) {
-          botBubble.innerHTML = "📊 <b>ARGO Telemetry Sync:</b> Float <b>ARGO-290241</b> reports sea surface temp of <b>27.4°C</b> and stable thermocline depth at <b>612m</b>.";
-        } else {
-          botBubble.innerHTML = `🌊 <b>Sagar Mitra Intelligence:</b> Processed query for Indian Ocean Basin. Stratification indices and telemetry are synchronized across active reporting floats.`;
-        }
+          let html = data.reply || "No response received.";
 
-        outputBox.appendChild(botBubble);
-        outputBox.scrollTop = outputBox.scrollHeight;
-      }, 2500);
+          if (data.confidence) {
+            const colors = { HIGH: "#2ecc71", MODERATE: "#f39c12", LOW: "#e74c3c" };
+            const c = colors[data.confidence.split(" ")[0]] || "#999";
+            html += `<div style="margin-top:8px;"><span style="background:${c};color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;">Confidence: ${data.confidence}</span></div>`;
+          }
+
+          if (data.alert) {
+            const alertColors = { SAFE: "#2ecc71", CAUTION: "#f39c12", WARNING: "#e74c3c" };
+            const ac = alertColors[data.alert.level] || "#999";
+            html += `<div style="margin-top:6px;padding:8px;border-left:4px solid ${ac};background:${ac}22;">⚠ <b>${data.alert.level}:</b> ${data.alert.message}</div>`;
+          }
+
+          if (data.plot_url) {
+            html += `<div style="margin-top:8px;"><img src="${data.plot_url}" style="max-width:100%;border-radius:8px;" /></div>`;
+          }
+
+          botBubble.innerHTML = html;
+          outputBox.appendChild(botBubble);
+          outputBox.scrollTop = outputBox.scrollHeight;
+        })
+        .catch((err) => {
+          loader.style.display = "none";
+          const botBubble = document.createElement("div");
+          botBubble.className = "chat-bubble-bot";
+          botBubble.innerHTML = `⚠️ Could not reach backend: ${err.message}. Is uvicorn running on port 8000?`;
+          outputBox.appendChild(botBubble);
+        });
     }
 
     lucide.createIcons();
