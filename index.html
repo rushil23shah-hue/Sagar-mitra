@@ -1050,7 +1050,9 @@
           const botBubble = document.createElement("div");
           botBubble.className = "chat-bubble-bot";
 
-          let html = data.reply || "No response received.";
+          let html = (data.reply || "No response received.")
+            .replace(/\*\*(.*?)\*\*/g, "$1")   // strip any stray markdown bold
+            .replace(/\n/g, "<br>");             // real line breaks
 
           if (data.confidence) {
             const colors = { HIGH: "#2ecc71", MODERATE: "#f39c12", LOW: "#e74c3c" };
