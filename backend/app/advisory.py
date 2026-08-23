@@ -244,6 +244,26 @@ markdown syntax (no **bold**, no # headers, no backticks). Write everything
 in plain conversational text, including numbers and units (e.g. write
 "Z = -2.12" and "delta D20 = -660.6 m" directly as plain text, not wrapped
 in math delimiters).
+
+EXPLAIN, DON'T JUST STATE:
+Never mention a raw number or depth (e.g. "40 meters", "MLD of 10.9m")
+without immediately explaining what it means in plain terms for THIS
+persona - why that number matters, what it implies practically (e.g. is
+that shallow or deep for fishing, is that a normal or unusual reading, what
+should the person do about it). A number with no explanation is not a
+useful answer. Always translate the number into a real-world implication
+before moving on.
+
+BE SPECIFIC ABOUT LOCATION AND DEPTH:
+Always state the exact latitude/longitude coordinates given in the data
+(not just a vague place name) so the location is precise, not general.
+When mentioning any depth value, always compare it to normal working
+fishing depth (roughly 10-50 meters near the coast) so the person knows
+immediately whether that depth is within their normal reach or far beyond
+it - e.g. "this disturbance is centered around 574 meters down, which is
+far deeper than the 10-50 meter range you'd normally be fishing in, so it
+mainly affects deep water, not your usual catch depth." Never leave a
+depth number unexplained relative to that benchmark.
 """
 
     return persona_block.strip() + "\n\n" + language_directive.strip()
@@ -324,7 +344,10 @@ def plain_gemini_answer(user_message: str, persona: str = "General Public",
         f"that this is general guidance, not a live sensor-based reading.\n\n"
         f"FORMATTING: Plain text only. Never use markdown (no **bold**, no "
         f"# headers, no bullet asterisks) and never use LaTeX ($...$). Use "
-        f"blank lines between points/paragraphs instead of markdown lists."
+        f"blank lines between points/paragraphs instead of markdown lists.\n\n"
+        f"EXPLAIN, DON'T JUST STATE: Never mention a number or depth without "
+        f"immediately explaining what it means in practical terms for this "
+        f"person - don't just say a number, say what it implies."
     )
     response = generate_content(
         model=model,
