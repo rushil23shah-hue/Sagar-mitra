@@ -1124,7 +1124,7 @@ soundToggle.addEventListener("click", () => {
       outputBox.scrollTop = outputBox.scrollHeight;
 
       // 3. Call the REAL Sagar Mitra backend
-      const API_BASE = "http://127.0.0.1:8000";
+      const API_BASE = "https://sagar-mitra-1.onrender.com";
       fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
