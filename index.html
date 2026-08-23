@@ -629,6 +629,91 @@
 
     .search-send-btn:hover { transform: scale(1.06); }
 
+    /* -------------------------------------------------------------
+       VOICE ASSIST: mic button + language row
+       ------------------------------------------------------------- */
+    .mic-btn {
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease, border-color 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .mic-btn:hover { transform: scale(1.06); border-color: var(--accent-cyan); }
+
+    .mic-btn.listening {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #ef4444;
+      animation: micPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+
+    .voice-lang-row {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    .voice-lang-label { display: flex; align-items: center; gap: 4px; }
+
+    .voice-lang-select {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .voice-tts-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .voice-tts-toggle input { cursor: pointer; accent-color: var(--accent-cyan); }
+
+    .tts-speak-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-cyan);
+      border-radius: 14px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .tts-speak-btn:hover { background: rgba(56, 189, 248, 0.12); }
+    .tts-speak-btn.speaking { background: rgba(56, 189, 248, 0.2); }
+
     .chat-processing-indicator {
       display: none;
       align-items: center;
@@ -875,6 +960,20 @@
         <span class="mini-verb-text" id="miniVerbText">Surfing...</span>
       </div>
 
+      <!-- Voice Language & TTS Controls -->
+      <div class="voice-lang-row">
+        <label for="voiceLang" class="voice-lang-label">🎙 Voice language:</label>
+        <select id="voiceLang" class="voice-lang-select">
+          <option value="en-IN">English</option>
+          <option value="hi-IN">हिंदी (Hindi)</option>
+          <option value="mr-IN">मराठी (Marathi)</option>
+        </select>
+        <label class="voice-tts-toggle">
+          <input type="checkbox" id="ttsEnabled" checked />
+          <span>🔊 Read replies aloud</span>
+        </label>
+      </div>
+
       <!-- Radiating Blue Light Search Bar -->
       <form class="radiating-search-bar" id="chatForm" onsubmit="handleQuerySubmit(event)">
         <i data-lucide="search" class="w-5 h-5 text-cyan-400"></i>
@@ -885,6 +984,9 @@
           placeholder="Ask Sagar Mitra about ocean anomalies, sea conditions, or floats..." 
           autocomplete="off"
         />
+        <button type="button" id="micBtn" class="mic-btn" title="Speak your question">
+          <i data-lucide="mic" class="w-5 h-5"></i>
+        </button>
         <button type="submit" class="search-send-btn">
           <i data-lucide="arrow-up" class="w-5 h-5"></i>
         </button>
@@ -1165,6 +1267,21 @@ soundToggle.addEventListener("click", () => {
           botBubble.innerHTML = html;
           outputBox.appendChild(botBubble);
           outputBox.scrollTop = outputBox.scrollHeight;
+
+          // ---- Voice output: auto-speak reply + manual replay button ----
+          const plainReplyText = (data.reply || "").replace(/\*\*(.*?)\*\*/g, "$1");
+          if (window.SagarVoice && plainReplyText) {
+            const speakBtn = document.createElement("button");
+            speakBtn.type = "button";
+            speakBtn.className = "tts-speak-btn";
+            speakBtn.innerHTML = "🔊 Replay";
+            speakBtn.onclick = () => window.SagarVoice.speak(plainReplyText);
+            botBubble.appendChild(speakBtn);
+
+            if (window.SagarVoice.isTTSEnabled()) {
+              window.SagarVoice.speak(plainReplyText);
+            }
+          }
         })
         .catch((err) => {
           loader.style.display = "none";
@@ -1174,6 +1291,91 @@ soundToggle.addEventListener("click", () => {
           outputBox.appendChild(botBubble);
         });
     }
+
+    // -------------------------------------------------------------
+    // 8. VOICE ASSISTANCE (Web Speech API — frontend only, no backend changes)
+    // -------------------------------------------------------------
+    (function setupVoiceAssist() {
+      const micBtn = document.getElementById("micBtn");
+      const chatInput = document.getElementById("chatInput");
+      const voiceLangSelect = document.getElementById("voiceLang");
+      const ttsCheckbox = document.getElementById("ttsEnabled");
+
+      // ---- Speech-to-Text (voice input) ----
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        // Browser doesn't support it (e.g. Firefox) - hide mic button gracefully
+        if (micBtn) micBtn.style.display = "none";
+      } else {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        let isListening = false;
+
+        micBtn.addEventListener("click", () => {
+          if (isListening) {
+            recognition.stop();
+            return;
+          }
+          recognition.lang = voiceLangSelect.value; // en-IN / hi-IN / mr-IN
+          try {
+            recognition.start();
+          } catch (err) {
+            console.warn("Speech recognition already active or failed to start:", err);
+          }
+        });
+
+        recognition.addEventListener("start", () => {
+          isListening = true;
+          micBtn.classList.add("listening");
+          chatInput.placeholder = "Listening...";
+        });
+
+        recognition.addEventListener("result", (event) => {
+          const transcript = event.results[0][0].transcript;
+          chatInput.value = transcript;
+        });
+
+        recognition.addEventListener("end", () => {
+          isListening = false;
+          micBtn.classList.remove("listening");
+          chatInput.placeholder = "Ask Sagar Mitra about ocean anomalies, sea conditions, or floats...";
+          // Auto-submit once speech is captured, if there's text
+          if (chatInput.value.trim()) {
+            document.getElementById("chatForm").requestSubmit();
+          }
+        });
+
+        recognition.addEventListener("error", (event) => {
+          isListening = false;
+          micBtn.classList.remove("listening");
+          chatInput.placeholder = "Ask Sagar Mitra about ocean anomalies, sea conditions, or floats...";
+          console.warn("Speech recognition error:", event.error);
+        });
+      }
+
+      // ---- Text-to-Speech (voice output) ----
+      // Maps our voice-language codes to speechSynthesis BCP-47 codes (same codes work).
+      function speakText(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel(); // stop any current speech first
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = voiceLangSelect.value;
+        utterance.rate = 0.98;
+        window.speechSynthesis.speak(utterance);
+        return utterance;
+      }
+
+      // Expose helpers globally so handleQuerySubmit can use them
+      window.SagarVoice = {
+        isTTSEnabled: () => ttsCheckbox.checked,
+        speak: speakText,
+        stop: () => window.speechSynthesis && window.speechSynthesis.cancel(),
+      };
+    })();
 
     lucide.createIcons();
   </script>
