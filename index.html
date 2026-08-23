@@ -310,7 +310,7 @@
 
     /* Custom Logo Placeholder */
     .custom-logo-img {
-      height: 32px;
+      height: 60px;
       width: auto;
       object-fit: contain;
     }
@@ -357,28 +357,42 @@
 
     .soundscape-widget {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--card-bg);
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--card-border);
-      cursor: pointer;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+
+    .soundscape-widget.playing {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
 
     .sound-bars {
       display: flex;
-      align-items: flex-end;
-      gap: 2.5px;
-      height: 14px;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 14px;
     }
 
     .s-bar {
       width: 2.5px;
-      background: var(--accent-cyan);
-      border-radius: 2px;
-      animation: soundwave 1.2s infinite ease-in-out;
+  background: var(--accent-cyan);
+  border-radius: 2px;
+  height: 4px;
+  animation: soundwave 1.2s infinite ease-in-out;
+  animation-play-state: paused; /* Paused by default */
     }
+
+    .soundscape-widget.playing .s-bar {
+  animation-play-state: running;
+}
+
     .s-bar:nth-child(1) { height: 4px; animation-delay: 0.0s; }
     .s-bar:nth-child(2) { height: 12px; animation-delay: 0.2s; }
     .s-bar:nth-child(3) { height: 8px; animation-delay: 0.4s; }
@@ -675,7 +689,7 @@
       <!-- Loading Screen Background Video (-U5_GOl4Uhc) with priority loading -->
       <iframe 
         id="loadBgVideo"
-        src="https://www.youtube-nocookie.com/embed/-U5_GOl4Uhc?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=-U5_GOl4Uhc&start=5&end=24&enablejsapi=1" 
+        src="https://www.youtube-nocookie.com/embed/-U5_GOl4Uhc?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=-U5_GOl4Uhc&start=15&end=30&enablejsapi=1" 
         allow="autoplay; encrypted-media" 
         loading="eager"
         allowfullscreen>
@@ -741,8 +755,7 @@
           Uncomment the <img> tag below and replace 'logo.png' with your file.
           ==========================================================
         -->
-        <!-- <img src="logo.png" alt="Sagar Mitra Logo" class="custom-logo-img" /> -->
-        <span>🌊</span>
+        <img src="logo.png" alt="Sagar Mitra Logo" class="custom-logo-img" />
         <span class="nav-brand-text">SAGAR MITRA</span>
       </div>
 
@@ -806,7 +819,7 @@
           </p>
         </div>
         <div class="video-panel-frame">
-          <img src="image.png" alt="Argo Float Growth Graph" 
+          <img src="graph.png" alt="Argo Float Growth Graph" 
     style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block;">
         </div>
       </div>
@@ -880,9 +893,6 @@
     </div>
   </section>
 
-  <!-- Ambient Ocean Audio Track -->
-  <audio id="oceanAudio" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b417e296.mp3?filename=ocean-waves-ambient-110057.mp3"></audio>
-
   <script>
     // -------------------------------------------------------------
     // 1. OCEAN VERBS CYCLER (Every 3 seconds)
@@ -941,7 +951,7 @@
           titleElement.style.transition = "transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s ease-in-out";
           titleElement.className = "hero-title";
         }, 1500);
-      }, 6000);
+      }, 3000);
     }
 
     // -------------------------------------------------------------
@@ -975,21 +985,77 @@
     // -------------------------------------------------------------
     // 5. OCEAN SOUNDSCAPE TOGGLE
     // -------------------------------------------------------------
-    const audio = document.getElementById("oceanAudio");
-    const soundToggle = document.getElementById("soundToggle");
-    let audioPlaying = false;
+    // Ocean Soundscape Synthesizer (Web Audio API)
+let audioCtx = null;
+let noiseNode = null;
+let isAudioPlaying = false;
+const soundToggle = document.getElementById("soundToggle");
 
-    soundToggle.addEventListener("click", () => {
-      if (!audioPlaying) {
-        audio.play().catch(() => {});
-        audioPlaying = true;
-        soundToggle.style.borderColor = "var(--accent-cyan)";
-      } else {
-        audio.pause();
-        audioPlaying = false;
-        soundToggle.style.borderColor = "var(--card-border)";
-      }
-    });
+function createOceanSound() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Generate 5 seconds of pink noise buffer
+  const bufferSize = audioCtx.sampleRate * 5;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+
+  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1;
+    b0 = 0.99886 * b0 + white * 0.0555179;
+    b1 = 0.99332 * b1 + white * 0.0750759;
+    b2 = 0.96900 * b2 + white * 0.1538520;
+    b3 = 0.86650 * b3 + white * 0.3104856;
+    b4 = 0.55000 * b4 + white * 0.5329522;
+    b5 = -0.7616 * b5 - white * 0.0168980;
+    output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.08;
+    b6 = white * 0.115926;
+  }
+
+  noiseNode = audioCtx.createBufferSource();
+  noiseNode.buffer = noiseBuffer;
+  noiseNode.loop = true;
+
+  // Lowpass filter for deep oceanic timbre
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(380, audioCtx.currentTime);
+
+  // Rhythmic wave swell generator
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.frequency.setValueAtTime(0.12, audioCtx.currentTime); // ~8s wave period
+  lfoGain.gain.setValueAtTime(220, audioCtx.currentTime);
+  lfo.connect(filter.frequency);
+
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+
+  noiseNode.connect(filter);
+  filter.connect(masterGain);
+  masterGain.connect(audioCtx.destination);
+
+  noiseNode.start();
+  lfo.start();
+}
+
+soundToggle.addEventListener("click", () => {
+  if (!isAudioPlaying) {
+    if (!audioCtx) {
+      createOceanSound();
+    } else if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    isAudioPlaying = true;
+    soundToggle.style.borderColor = "var(--accent-cyan)";
+  } else {
+    if (audioCtx && audioCtx.state === "running") {
+      audioCtx.suspend();
+    }
+    isAudioPlaying = false;
+    soundToggle.style.borderColor = "var(--card-border)";
+  }
+});
 
     // -------------------------------------------------------------
     // 6. LEAFLET MAP INITIALIZATION & ARGO DATA
