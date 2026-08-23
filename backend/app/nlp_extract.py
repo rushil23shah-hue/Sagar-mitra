@@ -47,10 +47,15 @@ Today's date is {today}.
 """
 
 
-def extract_query_parameters(user_message: str, model: str = "gemini-3.6-flash") -> dict:
+def extract_query_parameters(user_message: str, model: str = "gemini-3.6-flash",
+                              _attempt: int = 1) -> dict:
     """
     Phase 1 NLP: Converts a free-text user query into structured parameters
     for the Statistical Anomaly Engine.
+
+    Occasionally Gemini returns slightly malformed/truncated JSON on a first
+    try (LLM non-determinism) -- this retries once before giving up, since a
+    second attempt with the same prompt usually succeeds.
     """
     system_instruction = EXTRACTION_SYSTEM_PROMPT.replace("{today}", date.today().isoformat())
 
@@ -72,5 +77,10 @@ def extract_query_parameters(user_message: str, model: str = "gemini-3.6-flash")
     except json.JSONDecodeError:
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
-            return json.loads(match.group(0))
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
+        if _attempt < 2:
+            return extract_query_parameters(user_message, model=model, _attempt=_attempt + 1)
         raise ValueError(f"Could not parse extraction output: {text}")
