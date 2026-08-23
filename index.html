@@ -1130,7 +1130,13 @@ soundToggle.addEventListener("click", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+          throw new Error(data.detail || `Server error (${res.status})`);
+          }
+          return data;
+        })
         .then((data) => {
           loader.style.display = "none";
           const botBubble = document.createElement("div");
