@@ -32,10 +32,16 @@ markdown, no explanation, matching this exact schema:
 }
 
 Known Maharashtra coastal reference points (use if user names these or nearby areas):
-Mumbai (19.07,72.87), Ratnagiri (16.99,73.30), Sindhudurg (16.02,73.45),
-Raigad/Alibaug (18.64,72.87), Palghar (19.70,72.77), Vengurla (15.85,73.63).
+Mumbai (19.07,72.87), Koliwada/fishing village areas generically (19.07,72.87 - same as Mumbai,
+since "Koliwada" without further qualification usually refers to a Mumbai coastal fishing hamlet),
+Ratnagiri (16.99,73.30), Sindhudurg (16.02,73.45), Raigad/Alibaug (18.64,72.87),
+Palghar (19.70,72.77), Vengurla (15.85,73.63).
 
-If the user gives no location, default to Ratnagiri coordinates.
+If the user mentions ANY place name at all (even a generic or locally-known one like
+"Koliwada", a creek, a fishing village, a beach), match it to the closest known
+reference point above rather than leaving latitude/longitude null or silently
+defaulting elsewhere. Only use the true default (Ratnagiri coordinates) when
+absolutely NO location of any kind is mentioned in the message.
 If no date, use today.
 Today's date is {today}.
 """
