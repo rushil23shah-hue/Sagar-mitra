@@ -50,7 +50,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    mode: str  # "live_conditions" | "fallback_general_knowledge" | "concept_explanation" | "historical"
+    mode: str  # "live_conditions" | "fallback_general_knowledge" | "concept_explanation" | "historical" | "comparison"
     query_context: dict | None = None
     statistical_result: dict | None = None
     plot_url: str | None = None
