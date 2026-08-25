@@ -273,12 +273,12 @@ class ArgoStatisticalAnomalyEngine:
             if historical_timeseries is not None and "D20" in historical_timeseries.columns:
                 ks_stat, ks_p = self._ks_test(
                     np.array([layers["D20"]]), historical_timeseries["D20"].values)
-            if (z_d20 >= 2.0 and delta_d20 >= 30 and ks_p < 0.01):
+            if (z_d20 >= 1.2 and delta_d20 >= 15 and ks_p < 0.05):
                 anomalies.append(self._pack(
                     "Mesoscale Warm-Core Eddy", df,
                     {"z_score": round(z_d20, 2), "delta_d20_m": round(delta_d20, 1), "p_ks": round(ks_p, 4)},
                     z_d20, "High", "D20 isotherm displaced downward, indicating warm-core eddy."))
-            elif (z_d20 <= -2.0 and delta_d20 <= -30 and ks_p < 0.01):
+            elif (z_d20 <= -1.2 and delta_d20 <= -15 and ks_p < 0.05):
                 anomalies.append(self._pack(
                     "Mesoscale Cold-Core Eddy", df,
                     {"z_score": round(z_d20, 2), "delta_d20_m": round(delta_d20, 1), "p_ks": round(ks_p, 4)},
