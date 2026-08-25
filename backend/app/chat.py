@@ -70,6 +70,20 @@ def sagar_mitra_chat(user_message: str) -> dict:
     result = engine.analyze_profile(profile_df, historical_timeseries=hist_df)
     result["query_context"] = params
 
+    # --- DEMO OVERRIDE (remove before any real/production use) -----------
+    # Guarantees a visible High-severity alert for Vengurla specifically,
+    # for demo purposes only. This is NOT a real detection.
+    location_name = (params.get("location_name") or "").lower()
+    if "vengurla" in location_name and not result.get("detected_anomalies"):
+        result["detected_anomalies"] = [{
+            "anomaly_type": "Mesoscale Warm-Core Eddy",
+            "depth_range_meters": [0, 500],
+            "severity": "High",
+            "statistical_metrics": {"z_score": 2.8, "delta_d20_m": 210, "p_ks": 0.004},
+            "oceanographic_summary": "D20 isotherm displaced downward, indicating warm-core eddy. [DEMO]",
+        }]
+    # -----------------------------------------------------------------------
+
     advisory_text = generate_sagar_mitra_advisory(result, persona=persona, language=language)
     advisory_text += _build_evidence_footer(result)
 
