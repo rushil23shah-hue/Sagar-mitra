@@ -13,13 +13,43 @@ profile lookup later only requires changing the two lines marked below.
 from app.data import store
 from app.statistical_engine import ArgoStatisticalAnomalyEngine
 from app.nlp_extract import extract_query_parameters
-from app.advisory import generate_sagar_mitra_advisory, plain_gemini_answer
+from app.advisory import generate_sagar_mitra_advisory, plain_gemini_answer, generate_content
 from app.historical import sagar_mitra_historical_query
+from google.genai import types
+import re
 
 HISTORICAL_KEYWORDS = [
     "when was", "highest", "lowest", "graph", "trend", "plot",
     "history", "past", "in 20", "pie chart", "distribution", "breakdown",
 ]
+
+COMPARISON_KEYWORDS = [" vs ", " versus ", " or ", "compare", "which is better", "better place"]
+
+# Known coastal reference points + common aliases/typos, reused for comparison detection.
+KNOWN_LOCATIONS = {
+    "mumbai": (19.07, 72.87),
+    "koliwada": (19.07, 72.87),
+    "ratnagiri": (16.99, 73.30),
+    "sindhudurg": (16.02, 73.45),
+    "sintadurg": (16.02, 73.45),  # common misspelling
+    "alibaug": (18.64, 72.87),
+    "alibagh": (18.64, 72.87),    # common misspelling
+    "raigad": (18.64, 72.87),
+    "palghar": (19.70, 72.77),
+    "vengurla": (15.85, 73.63),
+}
+
+
+def _find_known_locations(message: str):
+    """Returns a list of (name, lat, lon) for every known place mentioned."""
+    msg = message.lower()
+    found = []
+    seen_coords = set()
+    for name, (lat, lon) in KNOWN_LOCATIONS.items():
+        if name in msg and (lat, lon) not in seen_coords:
+            found.append((name, lat, lon))
+            seen_coords.add((lat, lon))
+    return found
 
 
 def sagar_mitra_chat(user_message: str) -> dict:
@@ -153,11 +183,65 @@ def _build_alert(result: dict) -> dict | None:
     return {"level": "SAFE", "message": "No significant anomalies detected."}
 
 
+def sagar_mitra_compare(user_message: str) -> dict:
+    """
+    Compares 2+ known locations mentioned in the same question (e.g. "which
+    is better, Sindhudurg or Alibaug") by running the real-data check + engine
+    independently for each, then asking Gemini to write one comparison
+    answer grounded in both results.
+    """
+    locations = _find_known_locations(user_message)
+    params = extract_query_parameters(user_message)  # for persona/language only
+    persona = params.get("persona", "General Public")
+    language = params.get("language", "English")
+
+    per_location = []
+    for name, lat, lon in locations:
+        profile_df = store.get_real_profile_near(lat, lon)
+        if profile_df is None:
+            per_location.append({"name": name, "data_available": False})
+            continue
+        engine = ArgoStatisticalAnomalyEngine(climatology_db=store.calibrated_clim)
+        result = engine.analyze_profile(profile_df, historical_timeseries=store.get_real_hist_near(lat, lon))
+        per_location.append({
+            "name": name,
+            "data_available": True,
+            "confidence": "HIGH" if store.nearby_count(lat, lon) >= 200 else
+                          "MODERATE" if store.nearby_count(lat, lon) >= 30 else "LOW",
+            "layer_metrics": result.get("layer_metrics"),
+            "detected_anomalies": result.get("detected_anomalies"),
+        })
+
+    system_instruction = (
+        f"You are Sagar Mitra. Compare these coastal locations for a {persona} "
+        f"in {language}, based ONLY on the real data provided below. Give a "
+        f"clear recommendation on which is better right now and why, in plain "
+        f"text (no markdown, no LaTeX). If a location has no data available, "
+        f"say so honestly instead of guessing."
+    )
+    import json as _json
+    response = generate_content(
+        model="gemini-3.6-flash",
+        contents=f"User question: {user_message}\n\nData per location:\n{_json.dumps(per_location, indent=2)}",
+        config=types.GenerateContentConfig(system_instruction=system_instruction,
+                                            temperature=0.4, max_output_tokens=2048),
+    )
+    return {
+        "reply": response.text,
+        "mode": "comparison",
+        "query_context": params,
+        "statistical_result": {"locations": per_location},
+    }
+
+
 def sagar_mitra_router(message: str) -> dict:
     """
-    Routes a user message to either the historical-data agent or the live
-    conditions chat, based on keyword matching (same logic as the notebook).
+    Routes a user message to the comparison agent, the historical-data
+    agent, or the live conditions chat, based on keyword matching.
     """
-    if any(k in message.lower() for k in HISTORICAL_KEYWORDS):
+    lower = message.lower()
+    if any(k in lower for k in COMPARISON_KEYWORDS) and len(_find_known_locations(message)) >= 2:
+        return sagar_mitra_compare(message)
+    if any(k in lower for k in HISTORICAL_KEYWORDS):
         return sagar_mitra_historical_query(message)
     return sagar_mitra_chat(message)
